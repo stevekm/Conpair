@@ -19,8 +19,7 @@ from collections import defaultdict
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(THIS_DIR)
 sys.path.insert(0, PARENT_DIR)
-from modules.ContaminationModel import *
-from modules.ContaminationMarker import *
+from modules.ContaminationMarker import get_markers, genotype_likelihoods_for_markers
 sys.path.pop(0)
 
 CONPAIR_DIR = os.environ['CONPAIR_DIR']
