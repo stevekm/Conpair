@@ -2,3 +2,12 @@ conda/
 *.pyc
 conda
 conda*
+output*
+normal_pileups.txt
+normal_pileups.txt*
+*.pdf
+benchmarks.tsv
+benchmarks.tsv*
+normal_pileups*
+tumor_pileups*
+.RData
