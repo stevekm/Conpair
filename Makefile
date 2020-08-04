@@ -57,9 +57,10 @@ test-run1:
 THREADS:=8
 NUM_TUMORS:=1
 NUM_NORMALS:=5
+ACTIONS:=concordance,contamination
 run:
 	export CONPAIR_DIR=$(CURDIR)
-	python run.py "$(THREADS)" "$(NUM_TUMORS)" "$(NUM_NORMALS)"
+	python run.py "$(THREADS)" "$(NUM_TUMORS)" "$(NUM_NORMALS)" "$(ACTIONS)"
 
 bash:
 	bash
