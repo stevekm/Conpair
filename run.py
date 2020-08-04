@@ -128,34 +128,43 @@ def main():
     results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup)) for tumor_pileup, normal_pileup in pairs ] # [0:num_pairs]
     output = [ p.get() for p in results ]
 
-    # print to console
     timestop = datetime.datetime.now()
-    time_taken = timestop - timestart
-    print("[{timestamp}] {num} items processed ({time_taken})".format(
+    time_taken = str((timestop - timestart).seconds)
+    num_pairs = len(output)
+    num_tumors = len(tumor_pileups)
+    num_normals = len(normal_pileups)
+
+    # print to console
+    print("[{timestamp}] {num_pairs} pairs processed in {time_taken}s".format(
     timestamp = timestop,
-    num = len(results),
+    num_pairs = num_pairs,
     time_taken = time_taken
     ))
 
     # save the output log
     log_file = "output.{}pairs.{}t.{}n.{}thread.{}s.{}.json".format(
-        len(output),
-        len(tumor_pileups),
-        len(normal_pileups),
+        num_pairs,
+        num_tumors,
+        num_normals,
         num_threads,
-        str(time_taken.seconds),
+        time_taken,
         timestart.strftime('%Y-%m-%d_%H-%M-%S')
     )
     log = {
     'output': output,
-    'time': time_taken.seconds,
-    'num_pairs': len(output),
-    'num_tumors': len(tumor_pileups),
-    'num_normals': len(normal_pileups),
+    'time': time_taken,
+    'num_pairs': num_pairs,
+    'num_tumors': num_tumors,
+    'num_normals': num_normals,
     'threads': num_threads
     }
     with open(log_file, "w") as fout:
         json.dump(log, fout, indent = 4)
+
+    # save benchmarks
+    with open("benchmarks.tsv", "a") as fout:
+        line = '\t'.join([str(num_threads), str(time_taken), str(num_pairs), str(num_tumors), str(num_normals)]) + '\n'
+        fout.write(line)
 
 
 
