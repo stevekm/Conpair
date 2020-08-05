@@ -62,5 +62,15 @@ run:
 	export CONPAIR_DIR=$(CURDIR)
 	python run.py "$(THREADS)" "$(NUM_TUMORS)" "$(NUM_NORMALS)" "$(ACTIONS)"
 
+SUB_THREADS:=4 8 16 24 32
+$(SUB_THREADS):
+	bsub \
+	-W 12:00 \
+	-n $@ \
+	-oo lsf.$@.log \
+	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 10 100); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i; done'
+.PHONY:=$(SUB_THREADS)
+submit: $(SUB_THREADS)
+
 bash:
 	bash
