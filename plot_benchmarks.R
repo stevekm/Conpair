@@ -8,8 +8,8 @@ df[["num_threads"]] <- factor(df[["num_threads"]], levels = sort(unique(df[["num
 
 pdf("benchmark_time_pairs_threads.pdf", width = 10)
 ggplot(data = df, aes(x = num_pairs, y = time/60, color = num_threads, fill = action)) + 
-    geom_line() +
     geom_point() + 
+    geom_smooth(method = 'lm') +
     theme_bw() +
     ggtitle("Conpair Execution Time (min) vs. Number of Pairs vs. Thread Count")
 dev.off()

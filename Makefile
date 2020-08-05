@@ -67,8 +67,9 @@ $(SUB_THREADS):
 	bsub \
 	-W 12:00 \
 	-n $@ \
+	-sla CMOPI \
 	-oo lsf.$@.log \
-	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 10 100); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i; done'
+	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 101 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i; done'
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)
 
