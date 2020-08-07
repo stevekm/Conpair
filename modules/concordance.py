@@ -14,7 +14,7 @@ import os
 import optparse
 import math
 from collections import defaultdict
-from ContaminationMarker import get_markers, genotype_likelihoods_for_markers
+from ContaminationMarker import genotype_likelihoods_for_markers
 
 def main(
     tumor_pileup,
