@@ -11,13 +11,13 @@ import itertools
 from multiprocessing import Pool
 import json
 import argparse
-
+import modules.concordance
 # import the script as a module from the other directory
-THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-SCRIPT_DIR = os.path.join(THIS_DIR, "scripts")
-sys.path.insert(0, SCRIPT_DIR)
-import verify_concordance2
-sys.path.pop(0)
+# THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+# MODULE_DIR = os.path.join(THIS_DIR, "scripts")
+# sys.path.insert(0, SCRIPT_DIR)
+# # import verify_concordance2
+# sys.path.pop(0)
 
 # need to find a default set of targets to use
 default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
@@ -51,7 +51,7 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params):
     }
     if 'concordance' in actions_list:
         try:
-            concordance, num_markers_used, num_total_markers = verify_concordance2.main(
+            concordance, num_markers_used, num_total_markers = modules.concordance.main(
             tumor_pileup = tumor_pileup,
             normal_pileup = normal_pileup,
             min_mapping_quality = concordance_params['min_mapping_quality'],

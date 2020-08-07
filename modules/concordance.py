@@ -14,13 +14,11 @@ import os
 import optparse
 import math
 from collections import defaultdict
+from ContaminationMarker import get_markers, genotype_likelihoods_for_markers
 
 # need to import the module from the other dir
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 PARENT_DIR = os.path.dirname(THIS_DIR)
-sys.path.insert(0, PARENT_DIR)
-from modules.ContaminationMarker import get_markers, genotype_likelihoods_for_markers
-sys.path.pop(0)
 
 # need to find a default set of targets to use
 default_marker_file = os.path.join(PARENT_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
