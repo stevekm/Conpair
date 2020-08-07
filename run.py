@@ -155,6 +155,9 @@ def main(**kwargs):
     tumor_file = kwargs.pop('tumor_file', "tumors.txt")
     normal_file = kwargs.pop('normal_file', "normals.txt")
     markers = kwargs.pop('markers', default_marker_file)
+    save_json = kwargs.pop('save_json', False)
+    benchmarks = kwargs.pop('benchmarks', False)
+
 
     actions_list = actions.split(',')
 
@@ -187,8 +190,10 @@ def main(**kwargs):
     num_normals = len(normal_pileups)
 
     print_to_console(timestop, num_pairs, time_taken)
-    save_JSON_output(output, timestart, time_taken, num_pairs, num_tumors, num_normals, num_threads, actions_list)
-    save_benchmarks(num_threads, time_taken, num_pairs, num_tumors, num_normals, '.'.join(actions_list))
+    if save_json:
+        save_JSON_output(output, timestart, time_taken, num_pairs, num_tumors, num_normals, num_threads, actions_list)
+    if benchmarks:
+        save_benchmarks(num_threads, time_taken, num_pairs, num_tumors, num_normals, '.'.join(actions_list))
     save_table_output(output)
 
 def parse():
@@ -203,6 +208,8 @@ def parse():
     parser.add_argument('--tumor-file', dest = 'tumor_file', default = "tumors.txt", help = 'File with a list filepaths to the pileups of the tumor samples to use')
     parser.add_argument('--normal-file', dest = 'normal_file', default = "normals.txt", help = 'File with a list filepaths to the pileups of the normal samples to use')
     parser.add_argument('--markers', dest = 'markers', default = default_marker_file, help = 'Markers to use for analysis')
+    parser.add_argument('--json', dest = 'save_json', action='store_true', help = 'Save JSON output')
+    parser.add_argument('--benchmarks', dest = 'benchmarks', action='store_true', help = 'Append benchmarks to benchmarks.tsv')
 
     args = parser.parse_args()
     main(**vars(args))
