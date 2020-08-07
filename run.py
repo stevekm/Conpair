@@ -12,14 +12,9 @@ from multiprocessing import Pool
 import json
 import argparse
 import modules.concordance
-# import the script as a module from the other directory
-# THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-# MODULE_DIR = os.path.join(THIS_DIR, "scripts")
-# sys.path.insert(0, SCRIPT_DIR)
-# # import verify_concordance2
-# sys.path.pop(0)
 
 # need to find a default set of targets to use
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
 
 # default parameters to run concordance with
@@ -27,7 +22,6 @@ concordance_params = {
 'min_mapping_quality': 10,
 'normal_homozygous_markers_only': False,
 'markers': default_marker_file,
-'outfile': '-',
 'min_cov': 10,
 'min_base_quality': 20
 }
@@ -52,14 +46,13 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params):
     if 'concordance' in actions_list:
         try:
             concordance, num_markers_used, num_total_markers = modules.concordance.main(
-            tumor_pileup = tumor_pileup,
-            normal_pileup = normal_pileup,
-            min_mapping_quality = concordance_params['min_mapping_quality'],
-            normal_homozygous_markers_only = concordance_params['normal_homozygous_markers_only'],
-            markers = concordance_params['markers'],
-            min_cov = concordance_params['min_cov'],
-            min_base_quality = concordance_params['min_base_quality'],
-            outfile = concordance_params['outfile']
+                tumor_pileup = tumor_pileup,
+                normal_pileup = normal_pileup,
+                min_mapping_quality = concordance_params['min_mapping_quality'],
+                normal_homozygous_markers_only = concordance_params['normal_homozygous_markers_only'],
+                markers = concordance_params['markers'],
+                min_cov = concordance_params['min_cov'],
+                min_base_quality = concordance_params['min_base_quality']
             )
         except ZeroDivisionError:
             print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements; tumor_pileup: {}, normal_pileup: {}'.format(tumor_pileup, normal_pileup))
