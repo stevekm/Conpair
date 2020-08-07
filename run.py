@@ -12,8 +12,9 @@ from multiprocessing import Pool
 import json
 import argparse
 import modules.concordance
+from modules.ContaminationMarker import get_markers, genotype_likelihoods_for_markers
 
-# need to find a default set of targets to use
+# need to find a default set of targets to use; Conpair-GRCh37-default
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
 
@@ -21,12 +22,11 @@ default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosome
 concordance_params = {
 'min_mapping_quality': 10,
 'normal_homozygous_markers_only': False,
-'markers': default_marker_file,
 'min_cov': 10,
 'min_base_quality': 20
 }
 
-def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params):
+def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params, markers_data):
     """
     Run the Conpair wrapper scripts on the tumor normal pair and collect the results
     """
@@ -50,7 +50,7 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params):
                 normal_pileup = normal_pileup,
                 min_mapping_quality = concordance_params['min_mapping_quality'],
                 normal_homozygous_markers_only = concordance_params['normal_homozygous_markers_only'],
-                markers = concordance_params['markers'],
+                markers_data = markers_data,
                 min_cov = concordance_params['min_cov'],
                 min_base_quality = concordance_params['min_base_quality']
             )
@@ -156,11 +156,12 @@ def main(**kwargs):
     normal_file = kwargs.pop('normal_file', "normals.txt")
     markers = kwargs.pop('markers', default_marker_file)
 
-    concordance_params['markers'] = markers
-
     actions_list = actions.split(',')
 
     timestart = datetime.datetime.now()
+
+    # load the data for the markers
+    markers_data = get_markers(markers)
 
     # load the paths to pileups
     with open(tumor_file) as fin:
@@ -176,7 +177,7 @@ def main(**kwargs):
 
     # run the Copair scripts in parallele in a multi-thread process pool
     pool = Pool(num_threads)
-    results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup, actions_list, concordance_params)) for tumor_pileup, normal_pileup in pairs ]
+    results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup, actions_list, concordance_params, markers_data)) for tumor_pileup, normal_pileup in pairs ]
     output = [ p.get() for p in results ]
 
     timestop = datetime.datetime.now()
