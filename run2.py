@@ -19,7 +19,20 @@ sys.path.insert(0, SCRIPT_DIR)
 import verify_concordance2
 sys.path.pop(0)
 
-def run_conpair(tumor_pileup, normal_pileup, actions_list):
+# need to find a default set of targets to use
+default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
+
+# default parameters to run concordance with
+concordance_params = {
+'min_mapping_quality': 10,
+'normal_homozygous_markers_only': False,
+'markers': default_marker_file,
+'outfile': '-',
+'min_cov': 10,
+'min_base_quality': 20
+}
+
+def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params):
     """
     Run the Conpair wrapper scripts on the tumor normal pair and collect the results
     """
@@ -38,7 +51,16 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list):
     }
     if 'concordance' in actions_list:
         try:
-            concordance, num_markers_used, num_total_markers = verify_concordance2.main({'tumor_pileup':tumor_pileup, 'normal_pileup':normal_pileup})
+            concordance, num_markers_used, num_total_markers = verify_concordance2.main(
+            tumor_pileup = tumor_pileup,
+            normal_pileup = normal_pileup,
+            min_mapping_quality = concordance_params['min_mapping_quality'],
+            normal_homozygous_markers_only = concordance_params['normal_homozygous_markers_only'],
+            markers = concordance_params['markers'],
+            min_cov = concordance_params['min_cov'],
+            min_base_quality = concordance_params['min_base_quality'],
+            outfile = concordance_params['outfile']
+            )
         except ZeroDivisionError:
             print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements; tumor_pileup: {}, normal_pileup: {}'.format(tumor_pileup, normal_pileup))
             concordance = None
@@ -129,13 +151,9 @@ def save_table_output(output):
     if has_contamination:
         cont_out.close()
 
-
-
-
-
 def main(**kwargs):
     """
-    run2.py <num_threads> <num_tumors> <num_normals> concordance,contamination
+    Main control function for the script
     """
     num_threads = kwargs.pop('num_threads', 4)
     num_tumors = kwargs.pop('num_tumors', 1)
@@ -143,6 +161,9 @@ def main(**kwargs):
     actions = kwargs.pop('actions', "concordance,contamination")
     tumor_file = kwargs.pop('tumor_file', "tumors.txt")
     normal_file = kwargs.pop('normal_file', "normals.txt")
+    markers = kwargs.pop('markers', default_marker_file)
+
+    concordance_params['markers'] = markers
 
     actions_list = actions.split(',')
 
@@ -162,7 +183,7 @@ def main(**kwargs):
 
     # run the Copair scripts in parallele in a multi-thread process pool
     pool = Pool(num_threads)
-    results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup, actions_list)) for tumor_pileup, normal_pileup in pairs ]
+    results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup, actions_list, concordance_params)) for tumor_pileup, normal_pileup in pairs ]
     output = [ p.get() for p in results ]
 
     timestop = datetime.datetime.now()
@@ -187,6 +208,8 @@ def parse():
     parser.add_argument('--actions', dest = 'actions', default = 'concordance,contamination', help = 'A comma separate list of actions to run')
     parser.add_argument('--tumor-file', dest = 'tumor_file', default = "tumors.txt", help = 'File with a list filepaths to the pileups of the tumor samples to use')
     parser.add_argument('--normal-file', dest = 'normal_file', default = "normals.txt", help = 'File with a list filepaths to the pileups of the normal samples to use')
+    parser.add_argument('--markers', dest = 'markers', default = default_marker_file, help = 'Markers to use for analysis')
+
     args = parser.parse_args()
     main(**vars(args))
 

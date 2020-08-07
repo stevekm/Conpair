@@ -67,15 +67,16 @@ NUM_NORMALS:=5
 ACTIONS:=concordance,contamination
 TUMOR_FILE:=tumor_pileups.txt
 NORMAL_FILE:=normal_pileups.txt
+MARKERS:=data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt
 run:
-	export CONPAIR_DIR=$(CURDIR)
 	python run2.py \
 	--threads "$(THREADS)" \
 	--tumors "$(NUM_TUMORS)" \
 	--normals "$(NUM_NORMALS)" \
 	--actions "$(ACTIONS)" \
 	--tumor-file "$(TUMOR_FILE)" \
-	--normal-file "$(NORMAL_FILE)"
+	--normal-file "$(NORMAL_FILE)" \
+	--markers "$(MARKERS)"
 
 SUB_THREADS:=4 8 16 24 32
 $(SUB_THREADS):

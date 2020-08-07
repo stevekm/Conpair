@@ -22,45 +22,38 @@ sys.path.insert(0, PARENT_DIR)
 from modules.ContaminationMarker import get_markers, genotype_likelihoods_for_markers
 sys.path.pop(0)
 
-def main(opts):
+# need to find a default set of targets to use
+default_marker_file = os.path.join(PARENT_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
+
+
+def main(
+    min_mapping_quality,
+    normal_homozygous_markers_only,
+    markers,
+    outfile,
+    min_cov,
+    min_base_quality,
+    tumor_pileup,
+    normal_pileup
+    ):
     """
     Main control function for the script
     """
-    # get the parameters from the options passed
-    min_mapping_quality = opts.get('min_mapping_quality', 10)
-    normal_homozygous_markers_only = opts.get('normal_homozygous_markers_only', False)
-    markers = opts.get('markers', None)
-    outfile = opts.get('outfile', '-')
-    min_cov = opts.get('min_cov', 10)
-    min_base_quality = opts.get('min_base_quality', 20)
-    tumor_pileup = opts.get('tumor_pileup', None)
-    normal_pileup = opts.get('normal_pileup', None)
+    Markers_data = get_markers(markers)
 
-    CONPAIR_DIR = os.environ['CONPAIR_DIR']
-    MARKER_FILE = os.path.join(CONPAIR_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
-
-    if markers:
-        MARKER_FILE = markers
-
-    Markers = get_markers(MARKER_FILE)
-    COVERAGE_THRESHOLD = min_cov
-    MMQ = min_mapping_quality
-    MBQ = min_base_quality
-    AA_BB_only = normal_homozygous_markers_only
-
-    Normal_genotype_likelihoods = genotype_likelihoods_for_markers(Markers, normal_pileup, min_map_quality=MMQ, min_base_quality=MBQ)
-    Tumor_genotype_likelihoods = genotype_likelihoods_for_markers(Markers, tumor_pileup, min_map_quality=MMQ, min_base_quality=MBQ)
+    Normal_genotype_likelihoods = genotype_likelihoods_for_markers(Markers_data, normal_pileup, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
+    Tumor_genotype_likelihoods = genotype_likelihoods_for_markers(Markers_data, tumor_pileup, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
 
     concordant = 0
     discordant = 0
-    for m in Markers:
+    for m in Markers_data:
         NL = Normal_genotype_likelihoods[m]
         TL = Tumor_genotype_likelihoods[m]
         if NL is None or TL is None:
             continue
-        if NL['coverage'] < COVERAGE_THRESHOLD or TL['coverage'] < COVERAGE_THRESHOLD:
+        if NL['coverage'] < min_cov or TL['coverage'] < min_cov:
             continue
-        if AA_BB_only:
+        if normal_homozygous_markers_only:
             if NL['likelihoods'].index(max(NL['likelihoods'])) == 1:
                 continue
         if NL['likelihoods'].index(max(NL['likelihoods'])) == TL['likelihoods'].index(max(TL['likelihoods'])):
@@ -70,12 +63,12 @@ def main(opts):
 
     # TODO: find a better way to handle this
     # if concordant+discordant == 0:
-    #     print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements ({0})\nIs the coverage of your samples high enough?\nExiting...'.format(COVERAGE_THRESHOLD))
+    #     print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements ({0})\nIs the coverage of your samples high enough?\nExiting...'.format(min_cov))
     #     sys.exit(0)
 
     concordance = float(concordant)/float(concordant+discordant)
     num_markers_used = concordant + discordant
-    num_total_markers = len(Markers)
+    num_total_markers = len(Markers_data)
     return(concordance, num_markers_used, num_total_markers)
 
 def parse():
@@ -112,7 +105,20 @@ def parse():
             print('ERROR: Marker file {0} cannot be find.'.format(opts.markers))
             sys.exit(2)
 
-    print(main(vars(opts)))
+    # get the parameters from the options passed
+    # do it here so that we can minimize the number of tasks the `main` function needs to do
+    print(
+        main(
+        tumor_pileup = opts_dict.get('tumor_pileup', None),
+        normal_pileup = opts_dict.get('normal_pileup', None),
+        min_mapping_quality = opts_dict.get('min_mapping_quality', 10),
+        normal_homozygous_markers_only = opts_dict.get('normal_homozygous_markers_only', False),
+        markers = opts_dict.get('markers', default_marker_file),
+        min_cov = opts_dict.get('min_cov', 10),
+        min_base_quality = opts_dict.get('min_base_quality', 20),
+        outfile = opts_dict.get('outfile', '-')
+        )
+    )
 
 if __name__ == '__main__':
     parse()
