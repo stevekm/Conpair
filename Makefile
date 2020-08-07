@@ -65,12 +65,17 @@ THREADS:=8
 NUM_TUMORS:=1
 NUM_NORMALS:=5
 ACTIONS:=concordance,contamination
-# run:
-# 	export CONPAIR_DIR=$(CURDIR)
-# 	python run.py "$(THREADS)" "$(NUM_TUMORS)" "$(NUM_NORMALS)" "$(ACTIONS)"
+TUMOR_FILE:=tumor_pileups.txt
+NORMAL_FILE:=normal_pileups.txt
 run:
 	export CONPAIR_DIR=$(CURDIR)
-	python run2.py "$(THREADS)" "$(NUM_TUMORS)" "$(NUM_NORMALS)" "$(ACTIONS)"
+	python run2.py \
+	--threads "$(THREADS)" \
+	--tumors "$(NUM_TUMORS)" \
+	--normals "$(NUM_NORMALS)" \
+	--actions "$(ACTIONS)" \
+	--tumor-file "$(TUMOR_FILE)" \
+	--normal-file "$(NORMAL_FILE)"
 
 SUB_THREADS:=4 8 16 24 32
 $(SUB_THREADS):

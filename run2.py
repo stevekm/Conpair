@@ -10,6 +10,7 @@ import datetime
 import itertools
 from multiprocessing import Pool
 import json
+import argparse
 
 # import the script as a module from the other directory
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -131,33 +132,25 @@ def save_table_output(output):
 
 
 
-def main():
+def main(**kwargs):
     """
     run2.py <num_threads> <num_tumors> <num_normals> concordance,contamination
     """
-    # check if cli args were passed
-    args = sys.argv[1:]
-    if len(args) > 0:
-        num_threads = int(args[0])
-        num_tumors = int(args[1])
-        num_normals = int(args[2])
-        actions = args[3] # concordance,contamination
-    else:
-        num_threads = 8
-        num_tumors = 1
-        num_normals = 1
-        actions = "concordance,contamination"
+    num_threads = kwargs.pop('num_threads', 4)
+    num_tumors = kwargs.pop('num_tumors', 1)
+    num_normals = kwargs.pop('num_normals', 1)
+    actions = kwargs.pop('actions', "concordance,contamination")
+    tumor_file = kwargs.pop('tumor_file', "tumors.txt")
+    normal_file = kwargs.pop('normal_file', "normals.txt")
 
     actions_list = actions.split(',')
 
     timestart = datetime.datetime.now()
 
     # load the paths to pileups
-    tumor_pileup_file = "tumor_pileups.txt"
-    normal_pileup_file = "normal_pileups.txt"
-    with open(tumor_pileup_file) as fin:
+    with open(tumor_file) as fin:
         all_tumor_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
-    with open(normal_pileup_file) as fin:
+    with open(normal_file) as fin:
         all_normal_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
 
     tumor_pileups = all_tumor_pileups[0:num_tumors]
@@ -182,6 +175,19 @@ def main():
     save_benchmarks(num_threads, time_taken, num_pairs, num_tumors, num_normals, '.'.join(actions_list))
     save_table_output(output)
 
+def parse():
+    """
+    Parse the command line options
+    """
+    parser = argparse.ArgumentParser(description = 'Generate cBio Portal metadata files from various input files')
+    parser.add_argument('-t', '--threads', dest = 'num_threads', default = 4, type = int, help = 'The number of CPU threads to use')
+    parser.add_argument('--tumors', dest = 'num_tumors', default = 1, type = int, help = 'The number of tumor samples to use from the list')
+    parser.add_argument('--normals', dest = 'num_normals', default = 1, type = int,  help = 'The number of normal samples to use from the list')
+    parser.add_argument('--actions', dest = 'actions', default = 'concordance,contamination', help = 'A comma separate list of actions to run')
+    parser.add_argument('--tumor-file', dest = 'tumor_file', default = "tumors.txt", help = 'File with a list filepaths to the pileups of the tumor samples to use')
+    parser.add_argument('--normal-file', dest = 'normal_file', default = "normals.txt", help = 'File with a list filepaths to the pileups of the normal samples to use')
+    args = parser.parse_args()
+    main(**vars(args))
 
 if __name__ == '__main__':
-    main()
+    parse()
