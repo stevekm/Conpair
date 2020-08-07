@@ -74,7 +74,9 @@ def main(opts):
     #     sys.exit(0)
 
     concordance = float(concordant)/float(concordant+discordant)
-    return(concordance)
+    num_markers_used = concordant + discordant
+    num_total_markers = len(Markers)
+    return(concordance, num_markers_used, num_total_markers)
 
 def parse():
     """
