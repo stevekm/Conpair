@@ -68,6 +68,7 @@ ACTIONS:=concordance,contamination
 TUMOR_FILE:=tumor_pileups.txt
 NORMAL_FILE:=normal_pileups.txt
 MARKERS:=data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt
+ARGS:=
 run:
 	python run.py \
 	--threads "$(THREADS)" \
@@ -76,16 +77,16 @@ run:
 	--actions "$(ACTIONS)" \
 	--tumor-file "$(TUMOR_FILE)" \
 	--normal-file "$(NORMAL_FILE)" \
-	--markers "$(MARKERS)"
+	--markers "$(MARKERS)" $(ARGS)
 
 SUB_THREADS:=4 8 16 24 32
 $(SUB_THREADS):
 	bsub \
-	-W 24:00 \
+	-W 48:00 \
 	-n $@ \
 	-sla CMOPI \
-	-oo lsf.$@.log \
-	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 184); do make run2 NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i; done'
+	-oo lsf.$@.2.log \
+	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i ARGS="--benchmarks --json"; done'
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)
 
