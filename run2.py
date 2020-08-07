@@ -39,7 +39,8 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list):
     if 'concordance' in actions_list:
         try:
             concordance, num_markers_used, num_total_markers = verify_concordance2.main({'tumor_pileup':tumor_pileup, 'normal_pileup':normal_pileup})
-        except ZeroDivisionError: # There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements
+        except ZeroDivisionError:
+            print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements; tumor_pileup: {}, normal_pileup: {}'.format(tumor_pileup, normal_pileup))
             concordance = None
             num_markers_used = None
             num_total_markers = None
