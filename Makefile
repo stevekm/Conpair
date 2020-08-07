@@ -85,7 +85,7 @@ $(SUB_THREADS):
 	-W 48:00 \
 	-n $@ \
 	-sla CMOPI \
-	-oo lsf.$@.2.log \
+	-oo lsf.$@.3.log \
 	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i ARGS="--benchmarks --json"; done'
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)

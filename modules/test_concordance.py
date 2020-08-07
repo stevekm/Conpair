@@ -27,5 +27,17 @@ class TestCocordance(unittest.TestCase):
         self.assertEqual(num_markers_used, 7363)
         self.assertEqual(num_total_markers, 7387)
 
+    def test_concordanc2(self):
+        """
+        """
+        tumor_pileup = os.path.join(PILEUP_DIR, 'NA12878_tumor80x.gatk.pileup.txt')
+        markers_data = get_markers(marker_file)
+
+        concordance_val, num_markers_used, num_total_markers = concordance.main(tumor_pileup = tumor_pileup, normal_pileup = tumor_pileup, markers_data = markers_data)
+
+        self.assertEqual(concordance_val, 1.0)
+        self.assertEqual(num_markers_used, 7374)
+        self.assertEqual(num_total_markers, 7387)
+
 if __name__ == "__main__":
     unittest.main()
