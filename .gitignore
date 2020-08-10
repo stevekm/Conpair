@@ -11,3 +11,4 @@ benchmarks.tsv*
 normal_pileups*
 tumor_pileups*
 .RData
+*.pickle

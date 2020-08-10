@@ -85,5 +85,9 @@ $(SUB_THREADS):
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)
 
+likelihoods:
+	export CONPAIR_DIR=$(CURDIR)
+	python scripts/make_genotype_likelihoods.py
+
 bash:
 	bash
