@@ -54,12 +54,13 @@ run:
 	--markers "$(MARKERS)" $(ARGS)
 
 SUB_THREADS:=4 8 16 24 32
+SUB_LOG_SUFFIX:=log
 $(SUB_THREADS):
 	bsub \
 	-W 48:00 \
 	-n $@ \
 	-sla CMOPI \
-	-oo lsf.$@.3.log \
+	-oo lsf.$@.$(SUB_LOG_SUFFIX) \
 	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i ARGS="--benchmarks --json"; done'
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)

@@ -28,6 +28,9 @@ aggr[["min"]] <- aggregate(time_per_pair~num_threads, data = df, min)[["time_per
 aggr[["max"]] <- aggregate(time_per_pair~num_threads, data = df, max)[["time_per_pair"]]
 aggr[["sd"]] <- aggregate(time_per_pair~num_threads, data = df, sd)[["time_per_pair"]]
 
+# estimated number of hours to run against 50,000 pairs
+aggr[["est_50k_hrs"]] <- ((aggr[["mean"]] * 50000) / 60) / 60
+
 write.table(x = aggr, file = "aggregate_time_per_pair.tsv", quote = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE)
 
 save.image()
