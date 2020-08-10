@@ -61,7 +61,7 @@ $(SUB_THREADS):
 	-n $@ \
 	-sla CMOPI \
 	-oo lsf.$@.$(SUB_LOG_SUFFIX) \
-	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i ARGS="--benchmarks --json"; done'
+	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 2 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i ARGS="--benchmarks --json"; done'
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)
 
@@ -80,6 +80,8 @@ likelihoods: $(OUTPUT_DIR)
 	--output-dir "$(OUTPUT_DIR)" \
 	--markers "$(MARKERS)"
 
+timeit:
+	python timer.py
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
 # python ../Conpair/scripts/estimate_tumor_normal_contaminations.py -p pairing.txt -N ... -T ...

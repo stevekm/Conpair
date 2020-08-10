@@ -75,6 +75,23 @@ class TestCocordance(unittest.TestCase):
 
         shutil.rmtree(tmpdirpath)
 
+    def test_load_normal_from_pickle(self):
+        """
+        Test that the Normal pileup likelihoods can be loaded from .pickle file
+        """
+        tumor_pileup = os.path.join(PILEUP_DIR, 'NA12878_tumor80x.gatk.pileup.txt')
+        normal_pileup = os.path.join(PILEUP_DIR, 'NA12878_normal40x.gatk.pileup.txt.pickle')
+        markers_data = get_markers(marker_file)
+
+        concordance_val, num_markers_used, num_total_markers = concordance.main(tumor_pileup = tumor_pileup, normal_pileup = normal_pileup, markers_data = markers_data)
+
+        self.assertEqual(concordance_val, 0.9993209289691701)
+        self.assertEqual(num_markers_used, 7363)
+        self.assertEqual(num_total_markers, 7387)
+
+
+
+
 
 
 if __name__ == "__main__":

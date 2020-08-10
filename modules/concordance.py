@@ -15,6 +15,7 @@ import optparse
 import math
 from collections import defaultdict
 from ContaminationMarker import genotype_likelihoods_for_markers
+import pickle
 
 def main(
     tumor_pileup,
@@ -35,8 +36,17 @@ def main(
     #     parser.add_option('-B', '--min_base_quality', help='MIN BASE QUALITY [default: 20]', default=20, type='int', action='store')
     #     parser.add_option('-H', '--normal_homozygous_markers_only', help='USE ONLY MARKERS THAT ARE HOMOZYGOUS IN THE NORMAL SAMPLE (concordance will not be affected by CNV)', default=False, action='store_true')
     """
-    Normal_genotype_likelihoods = genotype_likelihoods_for_markers(markers_data, normal_pileup, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
-    Tumor_genotype_likelihoods = genotype_likelihoods_for_markers(markers_data, tumor_pileup, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
+    if normal_pileup.endswith('.pickle'):
+        with open(normal_pileup,"rb") as fin:
+            Normal_genotype_likelihoods = pickle.load(fin)
+    else:
+        Normal_genotype_likelihoods = genotype_likelihoods_for_markers(markers_data, normal_pileup, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
+
+    if tumor_pileup.endswith('.pickle'):
+        with open(tumor_pileup,"rb") as fin:
+            Tumor_genotype_likelihoods = pickle.load(fin)
+    else:
+        Tumor_genotype_likelihoods = genotype_likelihoods_for_markers(markers_data, tumor_pileup, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
 
     concordant = 0
     discordant = 0
