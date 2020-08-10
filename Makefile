@@ -71,11 +71,14 @@ bash:
 test:
 	python modules/test_concordance.py
 
-
-likelihoods:
-	export CONPAIR_DIR=$(CURDIR)
-	python scripts/make_genotype_likelihoods.py
-
+OUTPUT_DIR:=output
+$(OUTPUT_DIR):
+	mkdir -p $(OUTPUT_DIR)
+likelihoods: $(OUTPUT_DIR)
+	python scripts/make_genotype_likelihoods.py \
+	--pileup-file "$(NORMAL_FILE)" \
+	--output-dir "$(OUTPUT_DIR)" \
+	--markers "$(MARKERS)"
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
