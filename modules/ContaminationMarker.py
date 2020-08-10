@@ -18,7 +18,10 @@
 
 import os
 import itertools
-from .Genotypes import *
+if __name__ == 'modules.ContaminationMarker':
+    from .Genotypes import *
+if __name__ == 'ContaminationMarker':
+    from Genotypes import *
 from collections import OrderedDict
 
 

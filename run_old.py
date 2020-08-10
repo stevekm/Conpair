@@ -1,21 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Import the Conpair functionality from its scripts and modules and run it in parallel for all samples in the lists
+Run the Conpair scripts in parallel for all combinations of tumor and normal pileups
 """
-import os
 import sys
-import datetime
+import os
+import subprocess as sp
 import itertools
 from multiprocessing import Pool
+import datetime
+import re
 import json
 
-# import the script as a module from the other directory
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SCRIPT_DIR = os.path.join(THIS_DIR, "scripts")
-sys.path.insert(0, SCRIPT_DIR)
-import verify_concordance2
-sys.path.pop(0)
+verify_concordance_script = os.path.join(SCRIPT_DIR, 'verify_concordance.py')
+estimate_tumor_normal_contamination_script = os.path.join(SCRIPT_DIR, 'estimate_tumor_normal_contamination.py')
+
+def run_command(args):
+    """
+    Helper function to run a shell command easier
+    Parameters
+    ----------
+    args: list
+        a list of shell args to execute
+    """
+    process = sp.Popen(args, stdout = sp.PIPE, stderr = sp.PIPE, universal_newlines = True)
+    proc_stdout, proc_stderr = process.communicate()
+    returncode = process.returncode
+    proc_stdout = proc_stdout.strip()
+    proc_stderr = proc_stderr.strip()
+    return(returncode, proc_stdout, proc_stderr)
 
 def run_conpair(tumor_pileup, normal_pileup, actions_list):
     """
@@ -34,18 +49,55 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list):
             'normal_pileup': normal_pileup
         }
     }
+
     if 'concordance' in actions_list:
-        concordance = verify_concordance2.main({'tumor_pileup':tumor_pileup, 'normal_pileup':normal_pileup})
+        command = [ 'python2.7',  verify_concordance_script, '--tumor_pileup', tumor_pileup, '--normal_pileup', normal_pileup ]
+        returncode, proc_stdout, proc_stderr = run_command(command)
+
         result['concordance'] = {}
-        result['concordance']['time'] = (datetime.datetime.now() - timestart).seconds
+        result['concordance']['returncode'] = returncode
+        result['concordance']['stdout'] = proc_stdout
+        result['concordance']['stderr'] = proc_stderr
+        result['concordance']['time'] = str((datetime.datetime.now() - timestart).seconds)
+
+        concordance = None
+        if len(proc_stdout.split()) > 0:
+            try:
+                concordance = float(proc_stdout.split()[0].strip())
+            except:
+                pass
         result['concordance']['concordance'] = concordance
 
-    result['time'] = (datetime.datetime.now() - timestart).seconds
+    if 'contamination' in actions_list:
+        command = [ 'python2.7',  estimate_tumor_normal_contamination_script, '--tumor_pileup', tumor_pileup, '--normal_pileup', normal_pileup ]
+        returncode, proc_stdout, proc_stderr = run_command(command)
+
+        result['contamination'] = {}
+        result['contamination']['returncode'] = returncode
+        result['contamination']['stdout'] = proc_stdout
+        result['contamination']['stderr'] = proc_stderr
+        result['contamination']['time'] = str((datetime.datetime.now() - timestart).seconds)
+
+        normal_contamination = None
+        tumor_contamination = None
+        matches = re.findall(r'[0-9]+.[0-9]+', proc_stdout)
+        if len(matches) > 0:
+            try:
+                normal_contamination = float(matches[0])
+                tumor_contamination = float(matches[1])
+            except:
+                pass
+
+        result['contamination']['normal_contamination'] = normal_contamination
+        result['contamination']['tumor_contamination'] = tumor_contamination
+
+    result['time'] = str((datetime.datetime.now() - timestart).seconds)
+
     return(result)
 
 def main():
     """
-    run2.py <num_threads> <num_tumors> <num_normals> concordance,contamination
+    run.py <num_threads> <num_tumors> <num_normals> concordance,contamination
     """
     # check if cli args were passed
     args = sys.argv[1:]
@@ -78,13 +130,14 @@ def main():
     # get all combinations of both lists of pileups
     pairs = list(itertools.product(tumor_pileups, normal_pileups))
 
+    # get the first one for testing
     # run the Copair scripts in parallele in a multi-thread process pool
     pool = Pool(num_threads)
-    results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup, actions_list)) for tumor_pileup, normal_pileup in pairs ]
+    results = [ pool.apply_async(run_conpair, args=(tumor_pileup, normal_pileup, actions_list)) for tumor_pileup, normal_pileup in pairs ] # [0:num_pairs]
     output = [ p.get() for p in results ]
 
     timestop = datetime.datetime.now()
-    time_taken = (timestop - timestart).seconds
+    time_taken = str((timestop - timestart).seconds)
     num_pairs = len(output)
     num_tumors = len(tumor_pileups)
     num_normals = len(normal_pileups)
@@ -98,7 +151,7 @@ def main():
     ))
 
     # save the output log
-    log_file = "output2.{}pairs.{}t.{}n.{}thread.{}s.{}.json".format(
+    log_file = "output.{}pairs.{}t.{}n.{}thread.{}s.{}.json".format(
         num_pairs,
         num_tumors,
         num_normals,
@@ -119,9 +172,11 @@ def main():
         json.dump(log, fout, indent = 4)
 
     # save benchmarks
-    with open("benchmarks2.tsv", "a") as fout:
+    with open("benchmarks.tsv", "a") as fout:
         line = '\t'.join([str(num_threads), str(time_taken), str(num_pairs), str(num_tumors), str(num_normals), actions_str]) + '\n'
         fout.write(line)
+
+
 
 
 if __name__ == '__main__':

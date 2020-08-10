@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # module load R/R-3.6.3
 library("ggplot2")
-df <- read.delim(file = "benchmarks2.tsv", sep = '\t')
+df <- read.delim(file = "benchmarks.tsv", sep = '\t')
 colnames(df) <- c("num_threads", "time", "num_pairs", "num_tumors", "num_normals", "action")
 df[["time_per_pair"]] <- df[["time"]] / df[["num_pairs"]]
 df[["num_threads"]] <- factor(df[["num_threads"]], levels = sort(unique(df[["num_threads"]])))
@@ -27,6 +27,9 @@ aggr[["median"]] <- aggregate(time_per_pair~num_threads, data = df, median)[["ti
 aggr[["min"]] <- aggregate(time_per_pair~num_threads, data = df, min)[["time_per_pair"]]
 aggr[["max"]] <- aggregate(time_per_pair~num_threads, data = df, max)[["time_per_pair"]]
 aggr[["sd"]] <- aggregate(time_per_pair~num_threads, data = df, sd)[["time_per_pair"]]
+
+# estimated number of hours to run against 50,000 pairs
+aggr[["est_50k_hrs"]] <- ((aggr[["mean"]] * 50000) / 60) / 60
 
 write.table(x = aggr, file = "aggregate_time_per_pair.tsv", quote = FALSE, sep = '\t', col.names = TRUE, row.names = FALSE)
 

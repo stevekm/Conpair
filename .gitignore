@@ -12,3 +12,6 @@ normal_pileups*
 tumor_pileups*
 .RData
 *.pickle
+concordance.tsv
+*.tsv
+*.log
