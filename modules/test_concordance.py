@@ -89,8 +89,100 @@ class TestCocordance(unittest.TestCase):
         self.assertEqual(num_markers_used, 7363)
         self.assertEqual(num_total_markers, 7387)
 
+class TestCocordance2(unittest.TestCase):
+    def test_pair_concordance(self):
+        """
+        """
+        min_mapping_quality = 10
+        min_base_quality = 20
+        normal_homozygous_markers_only = False
+        min_cov = 10
+
+        tumor_pileup = os.path.join(PILEUP_DIR, 'NA12878_tumor80x.gatk.pileup.txt')
+        normal_pileup = os.path.join(PILEUP_DIR, 'NA12878_normal40x.gatk.pileup.txt')
+
+        markers_data = get_markers(marker_file)
+
+        normal_likelihoods = concordance.load_genotype_likelihood(
+            input_file = normal_pileup,
+            markers_data = markers_data,
+            min_mapping_quality = min_mapping_quality,
+            min_base_quality = min_base_quality)
+
+        tumor_likelihoods = concordance.load_genotype_likelihood(
+            input_file = tumor_pileup,
+            markers_data = markers_data,
+            min_mapping_quality = min_mapping_quality,
+            min_base_quality = min_base_quality)
+
+        is_concordant = concordance.pair_concordance(
+            normal_likelihoods = normal_likelihoods,
+            tumor_likelihoods = tumor_likelihoods,
+            marker = '1:60466814',
+            normal_homozygous_markers_only = normal_homozygous_markers_only,
+            min_cov = min_cov
+            )
+        self.assertEqual(is_concordant, True)
+
+        is_concordant = concordance.pair_concordance(
+            normal_likelihoods = normal_likelihoods,
+            tumor_likelihoods = tumor_likelihoods,
+            marker = '1:60466914',
+            normal_homozygous_markers_only = normal_homozygous_markers_only,
+            min_cov = min_cov
+            )
+        self.assertEqual(is_concordant, None)
+
+        is_concordant = concordance.pair_concordance(
+            normal_likelihoods = normal_likelihoods,
+            tumor_likelihoods = tumor_likelihoods,
+            marker = '3:23963064',
+            normal_homozygous_markers_only = normal_homozygous_markers_only,
+            min_cov = min_cov
+            )
+        self.assertEqual(is_concordant, False)
 
 
+    def test_batch_concordance(self):
+        """
+        """
+        print(">>> test_batch_concordance")
+        return()
+        tumor_pileup = os.path.join(PILEUP_DIR, 'NA12878_tumor80x.gatk.pileup.txt')
+        normal_pileup = os.path.join(PILEUP_DIR, 'NA12878_normal40x.gatk.pileup.txt')
+        markers_data = get_markers(marker_file)
+
+        concordance.batch_concordance(
+            tumor_pileups = [tumor_pileup],
+            normal_pileups = [normal_pileup],
+            markers_data = markers_data,
+            min_mapping_quality = 10,
+            normal_homozygous_markers_only = False,
+            min_cov = 10,
+            min_base_quality = 20,
+            num_threads = 4
+        )
+
+    def test_batch_concordance2(self):
+        """
+        """
+        print(">>> test_batch_concordance2")
+        # load the paths to pileups
+        with open("tumors.txt") as fin:
+            all_tumor_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
+        with open("normals.txt") as fin:
+            all_normal_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
+        markers_data = get_markers(marker_file)
+        concordance.batch_concordance(
+            tumor_pileups = all_tumor_pileups[0:1],
+            normal_pileups = all_normal_pileups,
+            markers_data = markers_data,
+            min_mapping_quality = 10,
+            normal_homozygous_markers_only = False,
+            min_cov = 10,
+            min_base_quality = 20,
+            num_threads = 8
+        )
 
 
 
