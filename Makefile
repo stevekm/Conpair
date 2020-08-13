@@ -38,30 +38,34 @@ install: conda
 THREADS:=8
 NUM_TUMORS:=1
 NUM_NORMALS:=5
-ACTIONS:=concordance,contamination
 TUMOR_FILE:=tumors.txt
 NORMAL_FILE:=normals.txt
 MARKERS:=/juno/work/ci/kellys5/projects/conpair-dev/markers/IMPACT468/FP_tiling_genotypes_for_Conpair.txt
-ARGS:=
+CONCORDANCE_FILE:=concordance.tsv
 run:
-	python run.py \
+	python run.py concordance \
+	--tumors-list "$(TUMOR_FILE)" \
+	--normals-list "$(NORMAL_FILE)" \
+	--num-tumors "$(NUM_TUMORS)" \
+	--num-normals "$(NUM_NORMALS)" \
+	--markers "$(MARKERS)" \
+	--output-file "$(CONCORDANCE_FILE)" \
 	--threads "$(THREADS)" \
-	--tumors "$(NUM_TUMORS)" \
-	--normals "$(NUM_NORMALS)" \
-	--actions "$(ACTIONS)" \
-	--tumor-file "$(TUMOR_FILE)" \
-	--normal-file "$(NORMAL_FILE)" \
-	--markers "$(MARKERS)" $(ARGS)
+	--save-benchmarks
 
 SUB_THREADS:=4 8 16 24 32
 SUB_LOG_SUFFIX:=log
+SUB_NUM_NORMALS:=95
+SUB_NUM_TUMORS:=184
+SUB_NUM_TUMORS_START:=1
+SUB_STEP:=2
 $(SUB_THREADS):
 	bsub \
 	-W 48:00 \
 	-n $@ \
 	-sla CMOPI \
 	-oo lsf.$@.$(SUB_LOG_SUFFIX) \
-	/bin/bash -c 'cd $(CURDIR); for i in $$(seq 1 2 184); do make run NUM_NORMALS=95 THREADS=$@ ACTIONS=concordance NUM_TUMORS=$$i ARGS="--benchmarks --json"; done'
+	/bin/bash -c 'cd $(CURDIR); for i in $$(seq $(SUB_NUM_TUMORS_START) $(SUB_STEP) $(SUB_NUM_TUMORS)); do make run NUM_NORMALS=$(SUB_NUM_NORMALS) THREADS=$@ NUM_TUMORS=$$i; done'
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)
 
@@ -80,31 +84,29 @@ likelihoods: $(OUTPUT_DIR)
 	--output-dir "$(OUTPUT_DIR)" \
 	--markers "$(MARKERS)"
 
-timeit:
-	python timer.py
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
 # python ../Conpair/scripts/estimate_tumor_normal_contaminations.py -p pairing.txt -N ... -T ...
 # export GATK_JAR=/path/to/gatk.jar
-TUMOR_PILEUP:=$(shell head -1 $(TUMOR_FILE))
-NORMAL_PILEUP:=$(shell head -1 $(NORMAL_FILE))
-test-run1:
-	export CONPAIR_DIR=$(CURDIR)
-	python2.7 scripts/verify_concordance.py \
-	--tumor_pileup $(TUMOR_PILEUP) \
-	--normal_pileup $(NORMAL_PILEUP) && \
-	python2.7 scripts/estimate_tumor_normal_contamination.py \
-	--tumor_pileup $(TUMOR_PILEUP) \
-	--normal_pileup $(NORMAL_PILEUP)
-# 0.782
-# Based on 188/7387 markers (coverage per marker threshold: 10 reads)
-# Minimum mappinq quality: 10
-# Minimum base quality: 20
-# Normal sample contamination level: 0.113%
-# Tumor sample contamination level: 0.0%
-
-test-run2:
-	export CONPAIR_DIR=$(CURDIR)
-	python2.7 scripts/verify_concordance2.py \
-	--tumor_pileup $(TUMOR_PILEUP) \
-	--normal_pileup $(NORMAL_PILEUP)
+# TUMOR_PILEUP:=$(shell head -1 $(TUMOR_FILE))
+# NORMAL_PILEUP:=$(shell head -1 $(NORMAL_FILE))
+# test-run1:
+# 	export CONPAIR_DIR=$(CURDIR)
+# 	python2.7 scripts/verify_concordance.py \
+# 	--tumor_pileup $(TUMOR_PILEUP) \
+# 	--normal_pileup $(NORMAL_PILEUP) && \
+# 	python2.7 scripts/estimate_tumor_normal_contamination.py \
+# 	--tumor_pileup $(TUMOR_PILEUP) \
+# 	--normal_pileup $(NORMAL_PILEUP)
+# # 0.782
+# # Based on 188/7387 markers (coverage per marker threshold: 10 reads)
+# # Minimum mappinq quality: 10
+# # Minimum base quality: 20
+# # Normal sample contamination level: 0.113%
+# # Tumor sample contamination level: 0.0%
+#
+# test-run2:
+# 	export CONPAIR_DIR=$(CURDIR)
+# 	python2.7 scripts/verify_concordance2.py \
+# 	--tumor_pileup $(TUMOR_PILEUP) \
+# 	--normal_pileup $(NORMAL_PILEUP)

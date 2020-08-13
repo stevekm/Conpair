@@ -15,3 +15,5 @@ tumor_pileups*
 concordance.tsv
 *.tsv
 *.log
+normals.txt
+tumors.txt
