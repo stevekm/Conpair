@@ -11,7 +11,7 @@ import itertools
 from multiprocessing import Pool
 import json
 import argparse
-import modules.concordance
+from modules.concordance import concordance
 from modules.ContaminationMarker import get_markers, genotype_likelihoods_for_markers
 
 # need to find a default set of targets to use; Conpair-GRCh37-default
@@ -45,7 +45,7 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params, m
     }
     if 'concordance' in actions_list:
         try:
-            concordance, num_markers_used, num_total_markers = modules.concordance.main(
+            concordance_val, num_markers_used, num_total_markers = concordance(
                 tumor_pileup = tumor_pileup,
                 normal_pileup = normal_pileup,
                 min_mapping_quality = concordance_params['min_mapping_quality'],
@@ -56,12 +56,12 @@ def run_conpair(tumor_pileup, normal_pileup, actions_list, concordance_params, m
             )
         except ZeroDivisionError:
             print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements; tumor_pileup: {}, normal_pileup: {}'.format(tumor_pileup, normal_pileup))
-            concordance = None
+            concordance_val = None
             num_markers_used = None
             num_total_markers = None
         result['concordance'] = {}
         result['concordance']['time'] = (datetime.datetime.now() - timestart).seconds
-        result['concordance']['concordance'] = concordance
+        result['concordance']['concordance'] = concordance_val
         result['concordance']['num_markers_used'] = num_markers_used
         result['concordance']['num_total_markers'] = num_total_markers
 

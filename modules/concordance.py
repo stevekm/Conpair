@@ -17,7 +17,7 @@ from collections import defaultdict
 from ContaminationMarker import genotype_likelihoods_for_markers
 import pickle
 
-def main(
+def concordance(
     tumor_pileup,
     normal_pileup,
     markers_data,
