@@ -23,46 +23,50 @@ default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosome
 def main(**kwargs):
     """
     """
-    pileup_file = kwargs.pop('pileup_file', 'normals.txt')
-    output_dir = kwargs.pop('output_dir', 'output')
+    pileup_file = kwargs.pop('pileup_file', None)
+    pileup_list = kwargs.pop('pileup_list', "pileups.txt")
+    output_dir = kwargs.pop('output_dir', None)
     markers = kwargs.pop('markers', default_marker_file)
     min_base_quality = kwargs.pop('min_base_quality', 20)
     min_mapping_quality = kwargs.pop('min_mapping_quality', 10)
 
-    # read paths to pileup files from list
-    with open(pileup_file) as fin:
-        all_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
+    # if a single pileup was passed, use that one
+    if pileup_file:
+        all_pileups = [ pileup_file ]
+    else:
+        # read paths to pileup files from list
+        with open(pileup_list) as fin:
+            all_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
 
     Markers = get_markers(markers)
 
     for pileup_file in all_pileups:
         likelihoods = genotype_likelihoods_for_markers(Markers, pileup_file, min_map_quality=min_mapping_quality, min_base_quality=min_base_quality)
 
-        output_file = os.path.join(output_dir, os.path.basename(pileup_file)) + '.pickle'
+        # output_file = os.path.join(output_dir, os.path.basename(pileup_file)) + '.pickle'
+        pre, ext = os.path.splitext(os.path.basename(pileup_file)) # foo, .pileup
+        output_file = pre + '.pickle'
+
+        # put it in a dir if one was specified
+        if output_dir:
+            output_file = os.path.join(output_dir, output_file)
+
+        # dont overwrite existing file
         if os.path.exists(output_file):
             print("ERROR: file already exists: " + output_file)
             raise
         else:
-            print("saving file: " + output_file)
             with open(output_file,"wb") as fout:
                 pickle.dump(likelihoods, fout)
-
-    # with open("likelihood.pickle","rb") as fin:
-    #     loaded_genotype_likelihoods = pickle.load(fin)
-    #
-    # print(len(likelihoods), len(loaded_genotype_likelihoods))
-    # print(type(likelihoods), type(loaded_genotype_likelihoods))
-    # # print(likelihoods.values())
-    # for key, value in likelihoods.items():
-    #     print(value == likelihoods[key])
 
 def parse():
     """
     Parse the command line options
     """
     parser = argparse.ArgumentParser(description = 'Generate cBio Portal metadata files from various input files')
-    parser.add_argument('--pileup-file', dest = 'pileup_file', default = "normals.txt", help = 'File with a list filepaths to the pileups of the tumor samples to use')
-    parser.add_argument('--output-dir', dest = 'output_dir', default = 'output', help = 'Output location for files')
+    parser.add_argument('--pileup', dest = 'pileup_file', default = None, help = 'A single GATK pileup file to convert')
+    parser.add_argument('--pileup-list', dest = 'pileup_list', default = "pileups.txt", help = 'File with a list filepaths to the pileups of the tumor samples to use')
+    parser.add_argument('--output-dir', dest = 'output_dir', default = None, help = 'Output location for files')
     parser.add_argument('--markers', dest = 'markers', default = default_marker_file, help = 'Markers to use for analysis')
     parser.add_argument('--min-base-quality', dest = 'min_base_quality', type = int, default = 20, help = 'Minimum base quality to use in output')
     parser.add_argument('--min-mapping-quality', dest = 'min_mapping_quality', type = int, default = 10, help = 'Minimum mapping quality to use in output')

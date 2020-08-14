@@ -15,3 +15,12 @@ tumor_pileups*
 concordance.tsv
 *.tsv
 *.log
+normals.txt
+tumors.txt
+*work/*
+nextflow
+gatk.jar
+.nextflow/
+bams
+nextflow.log*
+*/work/*
