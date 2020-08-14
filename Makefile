@@ -11,7 +11,7 @@ help:
 
 # ~~~~~ Install Dependencies ~~~~~ #
 # need to use Python 2.7 because Python 3 gives different results
-export PATH:=$(CURDIR)/conda/bin:$(CURDIR)/bin:$(PATH)
+export PATH:=$(CURDIR)/conda/bin:$(CURDIR)/scripts:$(CURDIR):$(PATH)
 unexport PYTHONPATH
 unexport PYTHONHOME
 
@@ -31,8 +31,13 @@ conda:
 	bash "$(CONDASH)" -b -p conda
 	rm -f "$(CONDASH)"
 
+export NXF_VER:=20.07.1
+./nextflow:
+	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
+	curl -fsSL get.nextflow.io | bash
+
 # https://github.com/mskcc/roslin-variant/blob/2.6.x/build/containers/conpair/0.3.3/Dockerfile
-install: conda
+install: conda ./nextflow
 	pip install scipy==1.1.0 numpy==1.15.4
 
 THREADS:=8
@@ -83,6 +88,34 @@ likelihoods: $(OUTPUT_DIR)
 	--pileup-file "$(NORMAL_FILE)" \
 	--output-dir "$(OUTPUT_DIR)" \
 	--markers "$(MARKERS)"
+
+# run a .bam -> .pileup -> .pickle workflow
+WORKFLOW_DIR:=$(CURDIR)/workflow
+export NXF_WORK:=$(WORKFLOW_DIR)/work
+export NXF_PID_FILE:=$(WORKFLOW_DIR)/.nextflow.pid
+export NXF_LOG:=$(WORKFLOW_DIR)/nextflow.log
+BAM_DIR:=$(CURDIR)/bams
+GATK_JAR:=/juno/work/ci/kellys5/projects/conpair-dev/gatk.jar
+REF_FASTA:=/juno/work/ci/resources/genomes/GRCh37/fasta/b37.fasta
+MARKERS_BED:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.bed
+MARKERS_TXT:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt
+preprocessing-workflow:
+	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
+	nextflow -log "$(NXF_LOG)" run \
+	-resume \
+	$(WORKFLOW_DIR)/preprocessing.nf \
+	--input_dir $(BAM_DIR) \
+	--output_dir $(OUTPUT_DIR) \
+	--gatk_jar $(GATK_JAR) \
+	--ref_fasta $(REF_FASTA) \
+	--markers_bed $(MARKERS_BED) \
+	--markers_txt $(MARKERS_TXT)
+.PHONY:workflow
+
+clean:
+	rm -f $(WORKFLOW_DIR)/*.log
+	rm -rf .nextflow
+	rm -rf $(NXF_WORK)
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
