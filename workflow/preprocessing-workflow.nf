@@ -1,3 +1,4 @@
+// Workflow for pre-processing of .bam files to generate pileups and genotype likelihood Python pickle files
 nextflow.enable.dsl=2
 
 include { pileup } from './pileup.nf'

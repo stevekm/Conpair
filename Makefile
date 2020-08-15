@@ -103,7 +103,8 @@ preprocessing-workflow:
 	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 	nextflow -log "$(NXF_LOG)" run \
 	-resume \
-	$(WORKFLOW_DIR)/preprocessing.nf \
+	$(WORKFLOW_DIR)/preprocessing-workflow.nf \
+	-profile preprocessing \
 	--input_dir $(BAM_DIR) \
 	--output_dir $(OUTPUT_DIR) \
 	--gatk_jar $(GATK_JAR) \
@@ -112,10 +113,22 @@ preprocessing-workflow:
 	--markers_txt $(MARKERS_TXT)
 .PHONY:workflow
 
+concordance-workflow:
+	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
+	nextflow -log "$(NXF_LOG)" run \
+	-resume \
+	$(WORKFLOW_DIR)/concordance-workflow.nf \
+	-profile concordance \
+	--tumors_list "$(TUMOR_FILE)" \
+	--normals_list "$(NORMAL_FILE)" \
+	--markers_txt "$(MARKERS)"
+
 clean:
 	rm -f $(WORKFLOW_DIR)/*.log
 	rm -rf .nextflow
 	rm -rf $(NXF_WORK)
+	rm -f *.html.*
+	rm -f *trace.txt.*
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...

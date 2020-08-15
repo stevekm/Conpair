@@ -24,3 +24,5 @@ gatk.jar
 bams
 nextflow.log*
 */work/*
+*trace.txt*
+*.html*
