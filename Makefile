@@ -124,11 +124,11 @@ concordance-workflow:
 	--markers_txt "$(MARKERS)"
 
 clean:
-	rm -f $(WORKFLOW_DIR)/*.log
-	rm -rf .nextflow
-	rm -rf $(NXF_WORK)
+	rm -f $(WORKFLOW_DIR)/*.log.*
 	rm -f *.html.*
 	rm -f *trace.txt.*
+	# rm -rf .nextflow
+	# rm -rf $(NXF_WORK)
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...

@@ -1,5 +1,5 @@
 process run_concordance {
-    echo true
+    publishDir "${params.output_dir}/concordance", mode: 'copy'
 
     input:
     tuple path(tumor_pileup), path(normals_list), path(markers)
