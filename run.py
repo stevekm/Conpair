@@ -131,7 +131,7 @@ def run_concordance(**kwargs):
         fout = open(output_file, "w")
 
     conc_fieldnames = ['concordance', 'num_markers_used', 'num_total_markers', 'tumor', 'normal', 'tumor_pileup', 'normal_pileup']
-    conc_writer = csv.DictWriter(fout, delimiter = '\t', fieldnames = conc_fieldnames)
+    conc_writer = csv.DictWriter(fout, delimiter = '\t', fieldnames = conc_fieldnames, lineterminator='\n')
     conc_writer.writeheader()
 
     for tumor_pileup, normal_pileup, tumor_name, normal_name, concordance_val, num_markers_used, num_total_markers in run_parallel_concordance(pairs, markers_data, num_threads, min_mapping_quality, normal_homozygous_markers_only, min_cov, min_base_quality):
@@ -144,6 +144,7 @@ def run_concordance(**kwargs):
         'num_markers_used': num_markers_used,
         'num_total_markers': num_total_markers
         })
+    fout.close()
 
     if save_benchmarks:
         save_benchmarks_to_file(benchmarks_file = benchmarks_file, num_threads = num_threads, num_pairs = num_pairs, num_tumors = num_tumors, num_normals = num_normals, action = "concordance")
