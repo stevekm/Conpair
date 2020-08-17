@@ -1,14 +1,4 @@
 #!/usr/bin/env python2.7
-
-# New York Genome Center
-# SOFTWARE COPYRIGHT NOTICE AGREEMENT
-# This software and its documentation are copyright (2016) by the New York
-# Genome Center. All rights are reserved. This software is supplied without
-# any warranty or guaranteed support whatsoever. The New York Genome Center
-# cannot be responsible for its use, misuse, or functionality.
-# Version: 0.15
-# Author: Ewa A Bergmann (ewa.a.bergmann@gmail.com)
-
 import sys
 import os
 import optparse
@@ -27,14 +17,35 @@ def concordance(
     min_base_quality = 20
     ):
     """
-    Main control function for the script
+    Calculate the concordance between a tumor and a normal sample. Both tumor and normal can be loaded from either a standard GATK pileup, or from a pre-saved genotypes likelihoods Python .pickle file.
 
-    #     parser.add_option('-T', '--tumor_pileup', help='TUMOR PILEUP FILE [mandatory field]', action='store')
-    #     parser.add_option('-N', '--normal_pileup', help='NORMAL PILEUP FILE [mandatory field]', action='store')
-    #     parser.add_option('-C', '--min_cov', help='MIN COVERAGE TO CALL GENOTYPE [default: 10]', default=10, type='int', action='store')
-    #     parser.add_option('-Q', '--min_mapping_quality', help='MIN MAPPING QUALITY [default: 10]', default=10, type='int', action='store')
-    #     parser.add_option('-B', '--min_base_quality', help='MIN BASE QUALITY [default: 20]', default=20, type='int', action='store')
-    #     parser.add_option('-H', '--normal_homozygous_markers_only', help='USE ONLY MARKERS THAT ARE HOMOZYGOUS IN THE NORMAL SAMPLE (concordance will not be affected by CNV)', default=False, action='store_true')
+    Parameters
+    ----------
+    tumor_pileup: str
+        path to tumor pileup file to use for concordance. Can be a standard GATK .pileup file, or a pre-saved genotypes likelihoods .pickle file
+    normal_pileup: str
+        path to normal pileup file to use for concordance. Can be a standard GATK .pileup file, or a pre-saved genotypes likelihoods .pickle file
+    markers_data:
+        data load for markers set from a call to `ContaminationMarker.get_markers`
+    min_mapping_quality: int
+        the min mapping quality to use
+    normal_homozygous_markers_only: bool
+        use only homozygous markers in the Normal sample
+    min_cov: int
+        the minimum coverage value to use
+    min_base_quality: int
+        the minimum base quality to use
+
+
+    Returns
+    -------
+    (float, int, int)
+        returns values for concordance, num_markers_used, num_total_markers based on the given pair
+
+    Notes
+    -----
+    Trying to calculate concordance between two samples with no shared markers can cause a divide by zero ZeroDivisionError error; this is currently handled in the `run.py` script.
+    TODO: figure out a good way to handle the ZeroDivisionError errors
     """
     if normal_pileup.endswith('.pickle'):
         with open(normal_pileup,"rb") as fin:

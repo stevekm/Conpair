@@ -86,6 +86,9 @@ def run_parallel_concordance(
         try:
             concordance_val, num_markers_used, num_total_markers = result.get()
         except ZeroDivisionError:
+            # if concordant+discordant == 0:
+            #     print('WARNING: There are no shared markers between the tumor and the normal samples that meet the specified coverage requirements ({0})\nIs the coverage of your samples high enough?\nExiting...'.format(min_cov))
+            #     sys.exit(0)
             concordance_val = None
             num_markers_used = None
             num_total_markers = None
@@ -93,6 +96,7 @@ def run_parallel_concordance(
 
 def save_benchmarks_to_file(benchmarks_file, num_threads, num_pairs, num_tumors, num_normals, action):
     """
+    Append benchmark metrics to a file
     """
     timestop = datetime.datetime.now()
     time_taken = (timestop - timestart).seconds
@@ -102,6 +106,7 @@ def save_benchmarks_to_file(benchmarks_file, num_threads, num_pairs, num_tumors,
 
 def run_concordance(**kwargs):
     """
+    Main control function for running concordance in parallel for a list of tumors and normals
     """
     output_file = kwargs.pop('output_file', 'concordance.tsv')
     num_normals = kwargs.pop('num_normals', 'all')
@@ -117,7 +122,7 @@ def run_concordance(**kwargs):
     save_benchmarks = kwargs.pop('save_benchmarks', False)
     benchmarks_file = kwargs.pop('benchmarks_file', 'benchmarks.tsv')
 
-    # load all comparisons
+    # load all comparisons of each tumor vs each normal
     pairs, num_tumors_loaded, num_normals_loaded = load_comparisons(normals_list, tumors_list, num_tumors, num_normals)
     num_pairs = len(pairs)
 
@@ -130,10 +135,12 @@ def run_concordance(**kwargs):
     else:
         fout = open(output_file, "w")
 
+    # initialize the output file writer
     conc_fieldnames = ['concordance', 'num_markers_used', 'num_total_markers', 'tumor', 'normal', 'tumor_pileup', 'normal_pileup']
     conc_writer = csv.DictWriter(fout, delimiter = '\t', fieldnames = conc_fieldnames, lineterminator='\n')
     conc_writer.writeheader()
 
+    # run all the comparisons in parallel and write their concordance outputs as they arrive
     for tumor_pileup, normal_pileup, tumor_name, normal_name, concordance_val, num_markers_used, num_total_markers in run_parallel_concordance(pairs, markers_data, num_threads, min_mapping_quality, normal_homozygous_markers_only, min_cov, min_base_quality):
         conc_writer.writerow({
         'tumor_pileup': tumor_pileup,
@@ -148,9 +155,6 @@ def run_concordance(**kwargs):
 
     if save_benchmarks:
         save_benchmarks_to_file(benchmarks_file = benchmarks_file, num_threads = num_threads, num_pairs = num_pairs, num_tumors = num_tumors, num_normals = num_normals, action = "concordance")
-
-
-
 
 def parse():
     """

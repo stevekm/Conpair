@@ -15,5 +15,5 @@ workflow {
     run_concordance(tumors)
 
     run_concordance.out.benchmarks | collectFile(name: 'benchmarks.tsv', storeDir: "${params.output_dir}")
-    // run_concordance.out.concordance_vals | collectFile(name: 'concordance.tsv', keepHeader: true, storeDir: "${params.output_dir}") // issues with the newlines maybe from carriage return usage in the source file
+    run_concordance.out.concordance_vals | collectFile(name: 'concordance.tsv', keepHeader: true, storeDir: "${params.output_dir}") 
 }
