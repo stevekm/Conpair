@@ -91,9 +91,8 @@ likelihoods: $(OUTPUT_DIR)
 
 # run a .bam -> .pileup -> .pickle workflow
 WORKFLOW_DIR:=$(CURDIR)/workflow
-export NXF_WORK:=$(WORKFLOW_DIR)/work
-export NXF_PID_FILE:=$(WORKFLOW_DIR)/.nextflow.pid
-export NXF_LOG:=$(WORKFLOW_DIR)/nextflow.log
+export NXF_WORK:=$(CURDIR)/work
+export NXF_LOG:=$(CURDIR)/nextflow.log
 BAM_DIR:=$(CURDIR)/bams
 GATK_JAR:=/juno/work/ci/kellys5/projects/conpair-dev/gatk.jar
 REF_FASTA:=/juno/work/ci/resources/genomes/GRCh37/fasta/b37.fasta
@@ -113,6 +112,7 @@ preprocessing-workflow:
 	--markers_txt $(MARKERS_TXT)
 .PHONY:workflow
 
+# run the concordance workflow on all the tumors in paralle
 concordance-workflow:
 	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 	nextflow -log "$(NXF_LOG)" run \
@@ -125,10 +125,15 @@ concordance-workflow:
 
 clean:
 	rm -f $(WORKFLOW_DIR)/*.log.*
+	rm -f *.log.*
 	rm -f *.html.*
 	rm -f *trace.txt.*
-	# rm -rf .nextflow
-	# rm -rf $(NXF_WORK)
+
+clean-all: clean
+	rm -rf $(NXF_WORK)
+# rm -rf .nextflow
+
+
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
