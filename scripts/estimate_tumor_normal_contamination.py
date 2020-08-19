@@ -13,11 +13,19 @@
 import sys
 import os
 import optparse
-import imp
 from collections import defaultdict
 import numpy as np
 from math import pow
 
+# need to import the module from the other dir
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+PARENT_DIR = os.path.dirname(THIS_DIR)
+sys.path.insert(0, PARENT_DIR)
+from modules import ContaminationModel
+from modules import ContaminationMarker
+from modules import MathOperations
+from modules import Genotypes
+sys.path.pop(0)
 
 HOMOZYGOUS_P_VALUE_THRESHOLD = 0.999
 
@@ -38,23 +46,18 @@ if opts.conpair_dir:
 else:
     CONPAIR_DIR = os.environ['CONPAIR_DIR']
 
-ContaminationModel = imp.load_source('/ContaminationModel', CONPAIR_DIR + '/modules/ContaminationModel.py')
-ContaminationMarker = imp.load_source('/ContaminationMarker', CONPAIR_DIR + '/modules/ContaminationMarker.py')
-MathOperations = imp.load_source('/MathOperations', CONPAIR_DIR + '/modules/MathOperations.py')
-Genotypes = imp.load_source('/Genotypes', CONPAIR_DIR + '/modules/Genotypes.py')
-
 if not opts.tumor_pileup or not opts.normal_pileup:
     parser.print_help()
     sys.exit(1)
-    
+
 if not os.path.exists(opts.tumor_pileup):
     print('ERROR: Input tumor file {0} cannot be find.'.format(opts.tumor_pileup))
     sys.exit(1)
-    
+
 if not os.path.exists(opts.normal_pileup):
     print('ERROR: Input normal file {0} cannot be find.'.format(opts.normal_pileup))
     sys.exit(1)
-    
+
 if opts.markers:
     MARKER_FILE = opts.markers
 else:
@@ -85,7 +88,7 @@ checkpoints.append(0.5)
 
 if opts.outfile != "-":
     outfile = open(opts.outfile, 'w')
-    
+
 ### PARSING THE NORMAL PILEUP FILE, CALCULATING THE LIKELIHOOD FUNCTION
 
 file = open(opts.normal_pileup)
@@ -98,32 +101,32 @@ for line in file:
         marker = Markers[pileup.chrom + ":" + pileup.pos]
     except:
         continue
-    
+
     if pileup.Quals[marker.ref] == [] and pileup.Quals[marker.alt] == []:
         continue
 
     RAF = marker.RAF
     ref_basequals = pileup.Quals[marker.ref]
     alt_basequals = pileup.Quals[marker.alt]
-    
+
     AA_likelihood, AB_likelihood, BB_likelihood = Genotypes.compute_genotype_likelihood(pileup.Quals[marker.ref], pileup.Quals[marker.alt], normalize=True)
 
     if AA_likelihood >= HOMOZYGOUS_P_VALUE_THRESHOLD:
         Normal_homozygous_genotype[pileup.chrom][pileup.pos] = {'genotype': marker.ref, 'AA_likelihood': AA_likelihood, 'AB_likelihood': AB_likelihood, 'BB_likelihood': BB_likelihood}
     elif BB_likelihood >= HOMOZYGOUS_P_VALUE_THRESHOLD:
         Normal_homozygous_genotype[pileup.chrom][pileup.pos] = {'genotype': marker.alt, 'AA_likelihood': AA_likelihood, 'AB_likelihood': AB_likelihood, 'BB_likelihood': BB_likelihood}
-        
-    
+
+
     p_AA, p_AB, p_BB = Genotypes.RAF2genotypeProb(RAF)
     lPAA = MathOperations.log10p(p_AA)
     lPAB = MathOperations.log10p(p_AB)
     lPBB = MathOperations.log10p(p_BB)
 
-    
+
     priors = [lPAA*2, lPAA+lPBB, lPAA+lPAB, lPAB*2, lPAB+lPAA, lPAB+lPBB, lPBB*2, lPBB+lPAA, lPBB+lPAB]
     marker_data = [priors, ref_basequals, alt_basequals]
     Data.append(marker_data)
-    
+
 file.close()
 D = ContaminationModel.calculate_contamination_likelihood(checkpoints, Data, Scores)
 ARGMAX = np.argmax(D)
@@ -143,7 +146,7 @@ elif x2 == 1.0:
 optimal_val = ContaminationModel.apply_brents_algorithm(Data, Scores, x1, x2, x3)
 
 ### PRINTING THE NORMAL RESULTS
-    
+
 if opts.outfile == "-":
     print("Normal sample contamination level: " + str(round(100.0*optimal_val, 3)) + "%")
 else:
@@ -157,10 +160,10 @@ file = open(opts.tumor_pileup)
 checkpoints = [i for i in drange(0.0, 1.0, grid_precision)]
 Data = []
 for line in file:
-    if line.startswith("[REDUCE RESULT]"): 
+    if line.startswith("[REDUCE RESULT]"):
         continue
     pileup = ContaminationMarker.parse_mpileup_line(line, min_map_quality=MMQ)
-    
+
     try:
         normal_hom_genotype = Normal_homozygous_genotype[pileup.chrom][pileup.pos]['genotype']
     except:
@@ -170,14 +173,14 @@ for line in file:
         marker = Markers[pileup.chrom + ":" + pileup.pos]
     except:
         continue
-    
+
     if pileup.Quals[marker.ref] == [] and pileup.Quals[marker.alt] == []:
         continue
-    
+
     RAF = marker.RAF
     ref_basequals = pileup.Quals[marker.ref]
     alt_basequals = pileup.Quals[marker.alt]
-    
+
     Normal_info = Normal_homozygous_genotype[pileup.chrom][pileup.pos]
     AA_likelihood = Normal_info['AA_likelihood']
     AB_likelihood = Normal_info['AB_likelihood']
@@ -185,8 +188,8 @@ for line in file:
     nlPAA = MathOperations.log10p(AA_likelihood)
     nlPAB = MathOperations.log10p(AB_likelihood)
     nlPBB = MathOperations.log10p(BB_likelihood)
-    
-    
+
+
     p_AA, p_AB, p_BB = Genotypes.RAF2genotypeProb(RAF)
     lPAA = MathOperations.log10p(p_AA)
     lPAB = MathOperations.log10p(p_AB)
@@ -194,7 +197,7 @@ for line in file:
     priors = [lPAA+nlPAA, lPBB+nlPAA,lPAB+nlPAA, lPAB+nlPAB, lPAA+nlPAB, lPBB+nlPAB, lPBB+nlPBB, lPAA+nlPBB, lPAB+nlPBB]
     marker_data = [priors, ref_basequals, alt_basequals]
     Data.append(marker_data)
-    
+
 file.close()
 
 D = ContaminationModel.calculate_contamination_likelihood(checkpoints, Data, Scores)
@@ -215,10 +218,9 @@ elif x2 == 1.0:
 optimal_val = ContaminationModel.apply_brents_algorithm(Data, Scores, x1, x2, x3)
 
 ### PRINTING THE TUMOR RESULTS
-    
+
 if opts.outfile == "-":
     print("Tumor sample contamination level: " + str(round(100.0*optimal_val,3)) + "%")
 else:
     outfile.write("Tumor sample contamination level: " + str(round(100.0*optimal_val,3)) + "%\n")
     outfile.close()
-
