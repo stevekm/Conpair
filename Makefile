@@ -218,9 +218,10 @@ clean:
 
 clean-all: clean
 	rm -rf $(NXF_WORK)
-# rm -rf .nextflow
-
-
+	rm -rf .nextflow
+	rm -f *.log*
+	rm -f *.html*
+	rm -f *trace.txt*
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
