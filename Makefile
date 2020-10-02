@@ -3,6 +3,92 @@ export SHELL:=/bin/bash
 UNAME:=$(shell uname)
 
 define help
+This is the Makefile to help with running Conpair on lists of tumor and normal pileups
+
+# INSTALLATION
+
+Install with:
+
+```
+make install
+```
+
+Run the test suite with
+
+```
+make test
+```
+
+# USAGE
+
+Run Conpair parallel concordance with
+
+```
+make run TUMOR_FILE=tumor_pileups.txt NORMAL_FILE=normal_pileups.txt
+```
+
+Where `TUMOR_FILE` and `NORMAL_FILE` are simple text files with one filepath per line
+
+Extra Makefile args should also be provided;
+
+```
+NUM_TUMORS=<number of tumors to use from list>
+NUM_NORMALS=<number of normals to use from list>
+MARKERS=markers.txt
+THREADS=<number of threads to use>
+CONCORDANCE_FILE=concordance_output.tsv
+```
+
+NOTE: the Makefile includes some default values for these which should be reviewed if you are not supplying them explicitly
+
+To make it run faster, you should run the pre-processing step to convert all the pileup files in your list to Python .pickle likelihoods files
+
+```
+make likelihoods NORMAL_FILE=list_of_bams.txt MARKERS=markers.txt OUTPUT_DIR=output
+```
+
+You can then use the paths to these .pickle files in the lists used for `TUMOR_FILE` and `NORMAL_FILE` with `make run`
+
+## WORKFLOWS
+
+To make it easier to process large numbers of files through all steps needed for Conpair, some workflows have been included
+
+### PREPROCESSING
+
+Run the pre-processing workflow to convert a directory of .bam files into Python .pickle likelihoods files to use with Conpair.
+
+NOTE: this requires a gatk.jar file for GATK 3
+
+```
+make preprocessing-workflow
+```
+
+Extra args to supply;
+
+```
+BAM_DIR=bams/
+GATK_JAR=gatk.jar
+REF_FASTA=genome.fasta
+MARKERS_BED=markers.bed
+MARKERS_TXT=markers.txt
+```
+
+### CONCORDANCE
+
+Run the concordance workflow to run concordance for each tumor against all supplied normals, each one submitted as a separate HPC job for higher throughput. Also includes downstream processing and aggregation of concordance for all comparisons.
+
+```
+make concordance-workflow
+```
+
+Extra args to supply;
+
+```
+TUMOR_FILE=tumor_pileups.txt # list of GATK pileup files or Python likelihoods pickle files
+NORMAL_FILE=normal_pileups.txt # list of GATK pileup files or Python likelihoods pickle files
+MARKERS=markers.txt
+```
+
 endef
 export help
 help:
@@ -10,11 +96,12 @@ help:
 .PHONY : help
 
 # ~~~~~ Install Dependencies ~~~~~ #
-# need to use Python 2.7 because Python 3 gives different results
 export PATH:=$(CURDIR)/conda/bin:$(CURDIR)/scripts:$(CURDIR):$(PATH)
 unexport PYTHONPATH
 unexport PYTHONHOME
 
+# need to use Python 2.7 because Python 3 gives different results
+# TODO: figure out why we get different results with Python 3
 ifeq ($(UNAME), Darwin)
 CONDASH:=Miniconda2-4.7.12.1-MacOSX-x86_64.sh
 endif
@@ -41,10 +128,10 @@ install: conda ./nextflow
 	pip install scipy==1.1.0 numpy==1.15.4
 
 THREADS:=8
-NUM_TUMORS:=1
-NUM_NORMALS:=5
 TUMOR_FILE:=tumors.txt
 NORMAL_FILE:=normals.txt
+NUM_TUMORS:=$(shell cat $(TUMOR_FILE) | head | wc -l)
+NUM_NORMALS:=$(shell cat $(NORMAL_FILE) | head | wc -l)
 MARKERS:=/juno/work/ci/kellys5/projects/conpair-dev/markers/IMPACT468/FP_tiling_genotypes_for_Conpair.txt
 CONCORDANCE_FILE:=concordance.tsv
 run:
@@ -85,7 +172,7 @@ $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 likelihoods: $(OUTPUT_DIR)
 	python scripts/make_genotype_likelihoods.py \
-	--pileup-file "$(NORMAL_FILE)" \
+	--pileup-list "$(NORMAL_FILE)" \
 	--output-dir "$(OUTPUT_DIR)" \
 	--markers "$(MARKERS)"
 
