@@ -125,7 +125,7 @@ export NXF_VER:=20.07.1
 
 # https://github.com/mskcc/roslin-variant/blob/2.6.x/build/containers/conpair/0.3.3/Dockerfile
 install: conda ./nextflow
-	pip install scipy==1.1.0 numpy==1.15.4
+	pip install -r requirements.txt
 
 THREADS:=8
 TUMOR_FILE:=tumors.txt
@@ -222,6 +222,27 @@ clean-all: clean
 	rm -f *.log*
 	rm -f *.html*
 	rm -f *trace.txt*
+
+
+
+# ~~~~~ Container ~~~~~ #
+# make the Docker container
+GIT_NAME:=conpair
+# GIT_TAG:=$(shell git describe --tags --abbrev=0)
+GIT_TAG:=dev
+DOCKER_TAG:=mskcc/$(GIT_NAME):$(GIT_TAG)
+docker-build:
+	docker build -t "$(DOCKER_TAG)" .
+
+# shell into the container to check that it looks right
+docker-bash:
+	docker run --rm -ti "$(DOCKER_TAG)" bash
+
+# push the container to Dockerhub
+# $ docker login --username=<username>
+docker-push:
+	docker push "$(DOCKER_TAG)"
+
 
 # ~~~~~ #
 # python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
