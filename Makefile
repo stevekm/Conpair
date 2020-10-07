@@ -243,30 +243,10 @@ docker-bash:
 docker-push:
 	docker push "$(DOCKER_TAG)"
 
-
-# ~~~~~ #
-# python ../Conpair/scripts/verify_concordances.py -p pairing.txt -N ... -T ...
-# python ../Conpair/scripts/estimate_tumor_normal_contaminations.py -p pairing.txt -N ... -T ...
-# export GATK_JAR=/path/to/gatk.jar
-# TUMOR_PILEUP:=$(shell head -1 $(TUMOR_FILE))
-# NORMAL_PILEUP:=$(shell head -1 $(NORMAL_FILE))
-# test-run1:
-# 	export CONPAIR_DIR=$(CURDIR)
-# 	python2.7 scripts/verify_concordance.py \
-# 	--tumor_pileup $(TUMOR_PILEUP) \
-# 	--normal_pileup $(NORMAL_PILEUP) && \
-# 	python2.7 scripts/estimate_tumor_normal_contamination.py \
-# 	--tumor_pileup $(TUMOR_PILEUP) \
-# 	--normal_pileup $(NORMAL_PILEUP)
-# # 0.782
-# # Based on 188/7387 markers (coverage per marker threshold: 10 reads)
-# # Minimum mappinq quality: 10
-# # Minimum base quality: 20
-# # Normal sample contamination level: 0.113%
-# # Tumor sample contamination level: 0.0%
-#
-# test-run2:
-# 	export CONPAIR_DIR=$(CURDIR)
-# 	python2.7 scripts/verify_concordance2.py \
-# 	--tumor_pileup $(TUMOR_PILEUP) \
-# 	--normal_pileup $(NORMAL_PILEUP)
+# pull the Dockerhub container and convert to Singularity container
+# NOTE: you cannot use a filename with a ':' as a Makefile target
+SINGULARITY_SIF:=mskcc_$(GIT_NAME):$(GIT_TAG).sif
+singularity-pull:
+	unset SINGULARITY_CACHEDIR && \
+	module load singularity/3.3.0 && \
+	singularity pull --force --name "$(SINGULARITY_SIF)" docker://$(DOCKER_TAG)

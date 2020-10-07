@@ -26,3 +26,4 @@ nextflow.log*
 */work/*
 *trace.txt*
 *.html*
+*.sif
