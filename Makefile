@@ -21,10 +21,16 @@ make test
 
 # USAGE
 
-Run Conpair parallel concordance with
+Example usages of Conpair parallel concordance can be used with:
 
 ```
-make run TUMOR_FILE=tumor_pileups.txt NORMAL_FILE=normal_pileups.txt
+make run
+```
+
+Another example can be used with
+
+```
+make run2 TUMOR_FILE=tumor_pileups.txt NORMAL_FILE=normal_pileups.txt
 ```
 
 Where `TUMOR_FILE` and `NORMAL_FILE` are simple text files with one filepath per line
@@ -32,8 +38,6 @@ Where `TUMOR_FILE` and `NORMAL_FILE` are simple text files with one filepath per
 Extra Makefile args should also be provided;
 
 ```
-NUM_TUMORS=<number of tumors to use from list>
-NUM_NORMALS=<number of normals to use from list>
 MARKERS=markers.txt
 THREADS=<number of threads to use>
 CONCORDANCE_FILE=concordance_output.tsv
@@ -127,23 +131,31 @@ export NXF_VER:=20.07.1
 install: conda ./nextflow
 	pip install -r requirements.txt
 
+# example for running with simple args
+TUMOR:=data/example/pileup/*tumor*.pileup.txt
+NORMAL:=data/example/pileup/*normal*.pileup.txt
+run:
+	python run.py concordance '$(TUMOR)' '$(NORMAL)'
+
+# output;
+# concordance     num_markers_used        num_total_markers       tumor   normal  tumor_pileup    normal_pileup
+# 0.9993209289691701      7363    7387    NA12878_tumor80x        NA12878_normal40x       data/example/pileup/NA12878_tumor80x.gatk.pileup.txt    data/example/pileup/NA12878_normal40x.gatk.pileup.txt
+
+# example for running with more complicated args
 THREADS:=8
 TUMOR_FILE:=tumors.txt
 NORMAL_FILE:=normals.txt
-NUM_TUMORS:=$(shell cat $(TUMOR_FILE) | head | wc -l)
-NUM_NORMALS:=$(shell cat $(NORMAL_FILE) | head | wc -l)
 MARKERS:=/juno/work/ci/kellys5/projects/conpair-dev/markers/IMPACT468/FP_tiling_genotypes_for_Conpair.txt
 CONCORDANCE_FILE:=concordance.tsv
-run:
+run2:
 	python run.py concordance \
 	--tumors-list "$(TUMOR_FILE)" \
 	--normals-list "$(NORMAL_FILE)" \
-	--num-tumors "$(NUM_TUMORS)" \
-	--num-normals "$(NUM_NORMALS)" \
 	--markers "$(MARKERS)" \
 	--output-file "$(CONCORDANCE_FILE)" \
 	--threads "$(THREADS)" \
 	--save-benchmarks
+
 
 SUB_THREADS:=4 8 16 24 32
 SUB_LOG_SUFFIX:=log
