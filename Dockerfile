@@ -24,7 +24,7 @@ find /usr/conda/ -follow -type f -name '*.js.map' -delete && \
 
 
 # add Conpair
-RUN git clone https://github.com/mskcc/Conpair.git && \
-    cd Conpair && \
-    pip install -r requirements.txt
+RUN mkdir /Conpair
+COPY . /Conpair
+RUN cd /Conpair && pip install -r requirements.txt
 ENV PATH=/Conpair/:/Conpair/scripts/:$PATH
