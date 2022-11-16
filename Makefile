@@ -203,7 +203,6 @@ REF_FASTA:=/juno/work/ci/resources/genomes/GRCh37/fasta/b37.fasta
 MARKERS_BED:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.bed
 MARKERS_TXT:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt
 preprocessing-workflow:
-	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 	nextflow -log "$(NXF_LOG)" run \
 	-resume \
 	$(WORKFLOW_DIR)/preprocessing-workflow.nf \
@@ -215,10 +214,10 @@ preprocessing-workflow:
 	--markers_bed $(MARKERS_BED) \
 	--markers_txt $(MARKERS_TXT)
 .PHONY:workflow
+# if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 
 # run the concordance workflow on all the tumors in paralle
 concordance-workflow:
-	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 	nextflow -log "$(NXF_LOG)" run \
 	-resume \
 	$(WORKFLOW_DIR)/concordance-workflow.nf \
@@ -226,6 +225,7 @@ concordance-workflow:
 	--tumors_list "$(TUMOR_FILE)" \
 	--normals_list "$(NORMAL_FILE)" \
 	--markers_txt "$(MARKERS)"
+# if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 
 clean:
 	rm -f $(WORKFLOW_DIR)/*.log.*
