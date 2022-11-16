@@ -10,10 +10,13 @@ log.info("${params}")
 log.info("----------------")
 
 workflow {
-    input_files = Channel.fromFilePairs("${params.input_dir}/*{.bam,.bai}")
+    input_files = Channel.fromFilePairs("${params.input_dir}/*{.bam,.bam.bai}") // files named foo.bam and foo.bam.bai
+        // "${params.input_dir}/*{.bam,.bai}" <- use this is the files are named foo.bam and foo.bai ; the bam and bai come out in different order
+        // def bai = items[0]
+        // def bam = items[1]
         .map { label, items ->
-            def bai = items[0]
-            def bam = items[1]
+            def bai = items[1]
+            def bam = items[0]
             return( [ bam, bai, file("${params.markers_bed}") ] )
         }
 
