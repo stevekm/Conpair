@@ -140,7 +140,7 @@ install: conda
 TUMOR:=data/example/pileup/*tumor*.pileup.txt
 NORMAL:=data/example/pileup/*normal*.pileup.txt
 run:
-	python run.py concordance '$(TUMOR)' '$(NORMAL)'
+	python2 run.py concordance '$(TUMOR)' '$(NORMAL)'
 
 # output;
 # concordance     num_markers_used        num_total_markers       tumor   normal  tumor_pileup    normal_pileup
@@ -153,7 +153,7 @@ NORMAL_FILE:=normals.txt
 MARKERS:=/juno/work/ci/kellys5/projects/conpair-dev/markers/IMPACT468/FP_tiling_genotypes_for_Conpair.txt
 CONCORDANCE_FILE:=concordance.tsv
 run2:
-	python run.py concordance \
+	python2 run.py concordance \
 	--tumors-list "$(TUMOR_FILE)" \
 	--normals-list "$(NORMAL_FILE)" \
 	--markers "$(MARKERS)" \
@@ -182,13 +182,13 @@ bash:
 	bash
 
 test:
-	python modules/test_concordance.py
+	python2 modules/test_concordance.py
 
 OUTPUT_DIR:=output
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 likelihoods: $(OUTPUT_DIR)
-	python scripts/make_genotype_likelihoods.py \
+	python2 scripts/make_genotype_likelihoods.py \
 	--pileup-list "$(NORMAL_FILE)" \
 	--output-dir "$(OUTPUT_DIR)" \
 	--markers "$(MARKERS)"
@@ -219,7 +219,6 @@ preprocessing-workflow:
 # run the concordance workflow on all the tumors in paralle
 concordance-workflow:
 	nextflow -log "$(NXF_LOG)" run \
-	-resume \
 	$(WORKFLOW_DIR)/concordance-workflow.nf \
 	-profile concordance \
 	--tumors_list "$(TUMOR_FILE)" \
