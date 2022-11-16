@@ -106,12 +106,19 @@ unexport PYTHONHOME
 
 # need to use Python 2.7 because Python 3 gives different results
 # TODO: figure out why we get different results with Python 3
+
+# CONDASH:=Miniconda2-4.7.12.1-MacOSX-x86_64.sh
+# NOTE: had to switch to Miniconda3 because Miniconda2 no longer works on newer macOS due to this;
+# https://github.com/conda/conda/issues/10361
+# https://stackoverflow.com/questions/65130080/attributeerror-running-django-site-on-mac-11-0-1
+# we can still run Conpair under Py2.7 but we just need to use Py3 miniconda for setup
+
 ifeq ($(UNAME), Darwin)
-CONDASH:=Miniconda2-4.7.12.1-MacOSX-x86_64.sh
+CONDASH:=Miniconda3-4.7.12.1-MacOSX-x86_64.sh
 endif
 
 ifeq ($(UNAME), Linux)
-CONDASH:=Miniconda2-4.7.12.1-Linux-x86_64.sh
+CONDASH:=Miniconda3-4.7.12.1-Linux-x86_64.sh
 endif
 
 CONDAURL:=https://repo.anaconda.com/miniconda/$(CONDASH)
@@ -122,14 +129,11 @@ conda:
 	bash "$(CONDASH)" -b -p conda
 	rm -f "$(CONDASH)"
 
-export NXF_VER:=20.07.1
-./nextflow:
-	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
-	curl -fsSL get.nextflow.io | bash
-
+# reference for installation;
 # https://github.com/mskcc/roslin-variant/blob/2.6.x/build/containers/conpair/0.3.3/Dockerfile
-install: conda ./nextflow
-	pip install -r requirements.txt
+install: conda
+	. ./conda/bin/activate
+	conda env create --name conpair --file environment.yml
 
 # example for running with simple args
 TUMOR:=data/example/pileup/*tumor*.pileup.txt
