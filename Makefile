@@ -194,27 +194,27 @@ likelihoods: $(OUTPUT_DIR)
 	--markers "$(MARKERS)"
 
 # run a .bam -> .pileup -> .pickle workflow
+# NOTE: put your path to a dir with .bam files here;
+BAM_DIR:=$(CURDIR)/bams
+# example;
+# BAM_DIR=/juno/work/ci/helix_filters_01/fixtures/Fillout01/bam/
 WORKFLOW_DIR:=$(CURDIR)/workflow
 export NXF_WORK:=$(CURDIR)/work
 export NXF_LOG:=$(CURDIR)/nextflow.log
-BAM_DIR:=$(CURDIR)/bams
-GATK_JAR:=/juno/work/ci/kellys5/projects/conpair-dev/gatk.jar
 REF_FASTA:=/juno/work/ci/resources/genomes/GRCh37/fasta/b37.fasta
 MARKERS_BED:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.bed
 MARKERS_TXT:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt
 preprocessing-workflow:
 	nextflow -log "$(NXF_LOG)" run \
-	-resume \
 	$(WORKFLOW_DIR)/preprocessing-workflow.nf \
 	-profile preprocessing \
 	--input_dir $(BAM_DIR) \
 	--output_dir $(OUTPUT_DIR) \
-	--gatk_jar $(GATK_JAR) \
 	--ref_fasta $(REF_FASTA) \
 	--markers_bed $(MARKERS_BED) \
 	--markers_txt $(MARKERS_TXT)
 .PHONY:workflow
-# if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
+
 
 # run the concordance workflow on all the tumors in paralle
 concordance-workflow:
@@ -225,7 +225,6 @@ concordance-workflow:
 	--tumors_list "$(TUMOR_FILE)" \
 	--normals_list "$(NORMAL_FILE)" \
 	--markers_txt "$(MARKERS)"
-# if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 
 clean:
 	rm -f $(WORKFLOW_DIR)/*.log.*
