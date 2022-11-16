@@ -149,6 +149,7 @@ def run_concordance(**kwargs):
     min_base_quality = kwargs.pop('min_base_quality', 20)
     save_benchmarks = kwargs.pop('save_benchmarks', False)
     benchmarks_file = kwargs.pop('benchmarks_file', 'benchmarks.tsv')
+    print_filepath = kwargs.pop('print_filepath')
 
     # load all comparisons of each tumor vs each normal
     pairs, num_tumors_loaded, num_normals_loaded = load_comparisons(
@@ -172,21 +173,28 @@ def run_concordance(**kwargs):
         fout = open(output_file, "w")
 
     # initialize the output file writer
-    conc_fieldnames = ['concordance', 'num_markers_used', 'num_total_markers', 'tumor', 'normal', 'tumor_pileup', 'normal_pileup']
+    conc_fieldnames = ['concordance', 'num_markers_used', 'num_total_markers', 'tumor', 'normal', 'tumor_filename', 'normal_filename']
+    if print_filepath:
+        conc_fieldnames.append("tumor_filepath")
+        conc_fieldnames.append("normal_filepath")
     conc_writer = csv.DictWriter(fout, delimiter = '\t', fieldnames = conc_fieldnames, lineterminator='\n')
     conc_writer.writeheader()
 
     # run all the comparisons in parallel and write their concordance outputs as they arrive
     for tumor_pileup, normal_pileup, tumor_name, normal_name, concordance_val, num_markers_used, num_total_markers in run_parallel_concordance(pairs, markers_data, num_threads, min_mapping_quality, normal_homozygous_markers_only, min_cov, min_base_quality):
-        conc_writer.writerow({
-        'tumor_pileup': tumor_pileup,
-        'normal_pileup': normal_pileup,
+        row = {
+        'tumor_filename': os.path.basename(tumor_pileup),
+        'normal_filename': os.path.basename(normal_pileup),
         'tumor': tumor_name,
         'normal': normal_name,
         'concordance': concordance_val,
         'num_markers_used': num_markers_used,
         'num_total_markers': num_total_markers
-        })
+        }
+        if print_filepath:
+            row["tumor_filepath"] = tumor_pileup
+            row["normal_filepath"] = normal_pileup
+        conc_writer.writerow(row)
     fout.close()
 
     if save_benchmarks:
@@ -218,6 +226,7 @@ def parse():
     concordance_parser.add_argument('--output-file', dest = 'output_file', help = 'File to output concordance data to. Use "-" for stdout') # , default = "concordance.tsv"
     concordance_parser.add_argument('--save-benchmarks', dest = 'save_benchmarks', action='store_true', help = 'Append benchmarks to a file')
     concordance_parser.add_argument('--benchmarks-file', dest = 'benchmarks_file', default='benchmarks.tsv', help = 'File to append benchmarks to')
+    concordance_parser.add_argument('--filepath', dest = 'print_filepath', action = "store_true", help = "Print the file path in the output")
 
     concordance_parser.set_defaults(func = run_concordance)
 

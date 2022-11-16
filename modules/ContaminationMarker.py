@@ -65,16 +65,21 @@ class Pileup:
 
 
 def parse_mpileup_line(line, min_map_quality=0, min_base_quality=0):
-
-    line = line.split()
+    line = line.split(' ') # NOTE: GATK pileup is space-delim but might output missing fields, so need to specify ' ' here or missing fields get collapsed ; https://gatk.broadinstitute.org/hc/en-us/articles/360037591631-Pileup
     chrom = line[0]
     pos = line[1]
     ref = line[2]
     bases = line[3]
-    baseQs = baseQ2int(line[4])
+
+    # if missing fields were collapsed then we will get an error here because the line length will be wrong
+    try:
+        baseQs = baseQ2int(line[4])
+    except IndexError:
+        print(line)
+        raise IndexError
 
     if min_map_quality > 0:
-        verbose_lines = line[6].split(',')
+        verbose_lines = line[7].split(',')
         mapqs = [v.split('@')[-1] for v in verbose_lines]
         mapqs_above_threshold = set([i for i in range(0, len(mapqs)) if int(mapqs[i]) >= min_map_quality])
 

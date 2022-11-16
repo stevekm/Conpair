@@ -106,36 +106,41 @@ unexport PYTHONHOME
 
 # need to use Python 2.7 because Python 3 gives different results
 # TODO: figure out why we get different results with Python 3
+
+# CONDASH:=Miniconda2-4.7.12.1-MacOSX-x86_64.sh
+# NOTE: had to switch to Miniconda3 because Miniconda2 no longer works on newer macOS due to this;
+# https://github.com/conda/conda/issues/10361
+# https://stackoverflow.com/questions/65130080/attributeerror-running-django-site-on-mac-11-0-1
+# we can still run Conpair under Py2.7 but we just need to use Py3 miniconda for setup
+
 ifeq ($(UNAME), Darwin)
-CONDASH:=Miniconda2-4.7.12.1-MacOSX-x86_64.sh
+CONDASH:=Miniconda3-4.7.12.1-MacOSX-x86_64.sh
 endif
 
 ifeq ($(UNAME), Linux)
-CONDASH:=Miniconda2-4.7.12.1-Linux-x86_64.sh
+CONDASH:=Miniconda3-4.7.12.1-Linux-x86_64.sh
 endif
 
 CONDAURL:=https://repo.anaconda.com/miniconda/$(CONDASH)
 
 conda:
-	echo ">>> Setting up conda..."
+	@printf ">>> Setting up conda...\n\n"
 	wget "$(CONDAURL)"
 	bash "$(CONDASH)" -b -p conda
 	rm -f "$(CONDASH)"
 
-export NXF_VER:=20.07.1
-./nextflow:
-	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
-	curl -fsSL get.nextflow.io | bash
-
+# reference for installation;
 # https://github.com/mskcc/roslin-variant/blob/2.6.x/build/containers/conpair/0.3.3/Dockerfile
-install: conda ./nextflow
-	pip install -r requirements.txt
+install: conda
+	. ./conda/bin/activate && \
+	conda env create --name conpair --file environment.yml && \
+	printf "\n>>> To activate, run:\nsource conda/bin/activate\nconda activate conpair\n"
 
 # example for running with simple args
 TUMOR:=data/example/pileup/*tumor*.pileup.txt
 NORMAL:=data/example/pileup/*normal*.pileup.txt
 run:
-	python run.py concordance '$(TUMOR)' '$(NORMAL)'
+	python2 run.py concordance '$(TUMOR)' '$(NORMAL)'
 
 # output;
 # concordance     num_markers_used        num_total_markers       tumor   normal  tumor_pileup    normal_pileup
@@ -148,7 +153,7 @@ NORMAL_FILE:=normals.txt
 MARKERS:=/juno/work/ci/kellys5/projects/conpair-dev/markers/IMPACT468/FP_tiling_genotypes_for_Conpair.txt
 CONCORDANCE_FILE:=concordance.tsv
 run2:
-	python run.py concordance \
+	python2 run.py concordance \
 	--tumors-list "$(TUMOR_FILE)" \
 	--normals-list "$(NORMAL_FILE)" \
 	--markers "$(MARKERS)" \
@@ -177,45 +182,43 @@ bash:
 	bash
 
 test:
-	python modules/test_concordance.py
+	python2 modules/test_concordance.py
 
 OUTPUT_DIR:=output
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 likelihoods: $(OUTPUT_DIR)
-	python scripts/make_genotype_likelihoods.py \
+	python2 scripts/make_genotype_likelihoods.py \
 	--pileup-list "$(NORMAL_FILE)" \
 	--output-dir "$(OUTPUT_DIR)" \
 	--markers "$(MARKERS)"
 
 # run a .bam -> .pileup -> .pickle workflow
+# NOTE: put your path to a dir with .bam files here;
+BAM_DIR:=$(CURDIR)/bams
+# example;
+# BAM_DIR=/juno/work/ci/helix_filters_01/fixtures/Fillout01/bam/
 WORKFLOW_DIR:=$(CURDIR)/workflow
 export NXF_WORK:=$(CURDIR)/work
 export NXF_LOG:=$(CURDIR)/nextflow.log
-BAM_DIR:=$(CURDIR)/bams
-GATK_JAR:=/juno/work/ci/kellys5/projects/conpair-dev/gatk.jar
 REF_FASTA:=/juno/work/ci/resources/genomes/GRCh37/fasta/b37.fasta
 MARKERS_BED:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.bed
 MARKERS_TXT:=$(CURDIR)/data/markers/GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt
 preprocessing-workflow:
-	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 	nextflow -log "$(NXF_LOG)" run \
-	-resume \
 	$(WORKFLOW_DIR)/preprocessing-workflow.nf \
 	-profile preprocessing \
 	--input_dir $(BAM_DIR) \
 	--output_dir $(OUTPUT_DIR) \
-	--gatk_jar $(GATK_JAR) \
 	--ref_fasta $(REF_FASTA) \
 	--markers_bed $(MARKERS_BED) \
 	--markers_txt $(MARKERS_TXT)
 .PHONY:workflow
 
+
 # run the concordance workflow on all the tumors in paralle
 concordance-workflow:
-	if module avail java/jdk1.8.0_202 1&>/dev/null; then module load java/jdk1.8.0_202; fi
 	nextflow -log "$(NXF_LOG)" run \
-	-resume \
 	$(WORKFLOW_DIR)/concordance-workflow.nf \
 	-profile concordance \
 	--tumors_list "$(TUMOR_FILE)" \

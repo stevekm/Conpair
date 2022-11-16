@@ -1,7 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
 Load the genotype likelihoods for all the samples in the list and save them to Python pickle for faster loading
+
+NOTE: /usr/bin/env python might return Python 3 on newer systems, be careful if we need to specify Python 2 if we are still using that!
 """
 import os
 import sys
