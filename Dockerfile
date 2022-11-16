@@ -26,5 +26,5 @@ find /usr/conda/ -follow -type f -name '*.js.map' -delete && \
 # add Conpair
 RUN mkdir /Conpair
 COPY . /Conpair
-RUN cd /Conpair && pip install -r requirements.txt
+RUN cd /Conpair && . /usr/conda/etc/profile.d/conda.sh && conda activate base && conda env update --file environment.yml
 ENV PATH=/Conpair/:/Conpair/scripts/:$PATH

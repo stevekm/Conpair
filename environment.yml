@@ -4,8 +4,8 @@ channels:
 dependencies:
   - bioconda::gatk4=4.3.0.0
   - python=2.7
-  - bioconda::nextflow=22.10.0
-  - pip=19.3.1=py27_0
+  - bioconda::nextflow=22
+  - pip=19
   - pip:
     - numpy==1.15.4
     - scipy==1.1.0
