@@ -124,7 +124,7 @@ endif
 CONDAURL:=https://repo.anaconda.com/miniconda/$(CONDASH)
 
 conda:
-	echo ">>> Setting up conda..."
+	@printf ">>> Setting up conda...\n\n"
 	wget "$(CONDAURL)"
 	bash "$(CONDASH)" -b -p conda
 	rm -f "$(CONDASH)"
@@ -132,8 +132,9 @@ conda:
 # reference for installation;
 # https://github.com/mskcc/roslin-variant/blob/2.6.x/build/containers/conpair/0.3.3/Dockerfile
 install: conda
-	. ./conda/bin/activate
-	conda env create --name conpair --file environment.yml
+	. ./conda/bin/activate && \
+	conda env create --name conpair --file environment.yml && \
+	printf "\n>>> To activate, run:\nsource conda/bin/activate\nconda activate conpair\n"
 
 # example for running with simple args
 TUMOR:=data/example/pileup/*tumor*.pileup.txt
