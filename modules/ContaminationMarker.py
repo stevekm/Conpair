@@ -79,7 +79,7 @@ def parse_mpileup_line(line, min_map_quality=0, min_base_quality=0):
         raise IndexError
 
     if min_map_quality > 0:
-        verbose_lines = line[6].split(',')
+        verbose_lines = line[7].split(',')
         mapqs = [v.split('@')[-1] for v in verbose_lines]
         mapqs_above_threshold = set([i for i in range(0, len(mapqs)) if int(mapqs[i]) >= min_map_quality])
 
