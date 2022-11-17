@@ -178,11 +178,9 @@ $(SUB_THREADS):
 .PHONY:=$(SUB_THREADS)
 submit: $(SUB_THREADS)
 
-bash:
-	bash
-
 test:
 	python2 modules/test_concordance.py
+	python2 modules/test_loader.py
 
 OUTPUT_DIR:=output
 $(OUTPUT_DIR):
