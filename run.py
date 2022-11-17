@@ -12,69 +12,13 @@ import argparse
 from multiprocessing import Pool
 from modules.ContaminationMarker import get_markers
 from modules.concordance import concordance
+from modules.loader import load_comparisons
 
 # get the path to the included default margers; Conpair-GRCh37-default
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 default_marker_file = os.path.join(THIS_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
 
 timestart = datetime.datetime.now()
-
-def load_comparisons(
-    normals_list = None, # text file with file paths, one per line
-    tumors_list = None, # text file with file paths, one per line
-    tumor = None, # glob pattern or path to tumor file(s)
-    normal = None, # glob pattern or path to tumor file(s)
-    num_tumors = 'all',
-    num_normals = 'all'):
-    """
-    Load the samples from file and make the comparisons of tumors vs normals
-    """
-    # load the paths to pileups
-    tumor_pileups = None
-    normal_pileups = None
-
-    # evaluate if paths / glob patterns passed
-    if tumor:
-        tumor_pileups = glob.glob(tumor)
-    if normal:
-        normal_pileups = glob.glob(normal)
-
-    # try to load from files if nothing has been loaded yet
-    if tumor_pileups is None and tumors_list:
-        with open(tumors_list) as fin:
-            tumor_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
-
-    if normal_pileups is None and normals_list:
-        with open(normals_list) as fin:
-            normal_pileups  = [ line.strip() for line in fin if line.strip() != '' ]
-
-    help_message = "Please run again with positional args for 'tumor' and 'normal', or with args for '--tumors-list' and '--normals-list'."
-    if tumor_pileups is None:
-        raise Exception("No tumor files loaded. " + help_message)
-    if normal_pileups is None:
-        raise Exception("No normal files loaded. " + help_message)
-
-    # subset the lists if desired
-    if num_tumors != 'all':
-        tumor_pileups = [ t for t in tumor_pileups[0:int(num_tumors)] ]
-    if num_normals != 'all':
-        normal_pileups = [ t for t in normal_pileups[0:int(num_normals)] ]
-
-    num_tumors_loaded = len(tumor_pileups)
-    num_normals_loaded = len(normal_pileups)
-
-    # get all combinations of both lists of pileups
-    pairs = list(itertools.product(tumor_pileups, normal_pileups))
-
-    # add sample ID labels to each pair
-    labeled_pairs = []
-    for pair in pairs:
-        tumor_pileup, normal_pileup = pair
-        tumor_name = os.path.basename(tumor_pileup).split('.')[0]
-        normal_name = os.path.basename(normal_pileup).split('.')[0]
-        labeled_pairs.append((tumor_pileup, normal_pileup, tumor_name, normal_name))
-    return(labeled_pairs, num_tumors_loaded, num_normals_loaded)
-
 
 def run_parallel_concordance(
     pairs,
@@ -150,6 +94,9 @@ def run_concordance(**kwargs):
     save_benchmarks = kwargs.pop('save_benchmarks', False)
     benchmarks_file = kwargs.pop('benchmarks_file', 'benchmarks.tsv')
     print_filepath = kwargs.pop('print_filepath')
+    use_manifests = kwargs.pop('use_manifests', False)
+    manifest_dir = kwargs.pop('manifest_dir', None)
+
 
     # load all comparisons of each tumor vs each normal
     pairs, num_tumors_loaded, num_normals_loaded = load_comparisons(
@@ -158,7 +105,9 @@ def run_concordance(**kwargs):
         normals_list = normals_list,
         tumors_list = tumors_list,
         num_tumors = num_tumors,
-        num_normals = num_normals
+        num_normals = num_normals,
+        use_manifests = use_manifests,
+        manifest_dir = manifest_dir
         )
 
     num_pairs = len(pairs)
@@ -227,6 +176,8 @@ def parse():
     concordance_parser.add_argument('--save-benchmarks', dest = 'save_benchmarks', action='store_true', help = 'Append benchmarks to a file')
     concordance_parser.add_argument('--benchmarks-file', dest = 'benchmarks_file', default='benchmarks.tsv', help = 'File to append benchmarks to')
     concordance_parser.add_argument('--filepath', dest = 'print_filepath', action = "store_true", help = "Print the file path in the output")
+    concordance_parser.add_argument('--manifests', dest = 'use_manifests', action = "store_true", help = "Load sample IDs from adjacent .json manifest files for each input file")
+    concordance_parser.add_argument('--manifest-dir', dest = 'manifest_dir', default = None, help = "Alternate directory to load manifest files from")
 
     concordance_parser.set_defaults(func = run_concordance)
 

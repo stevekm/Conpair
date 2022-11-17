@@ -141,6 +141,8 @@ TUMOR:=data/example/pileup/*tumor*.pileup.txt
 NORMAL:=data/example/pileup/*normal*.pileup.txt
 run:
 	python2 run.py concordance '$(TUMOR)' '$(NORMAL)'
+	printf "\n\n"
+	python2 run.py concordance --manifests --filepath '$(TUMOR)' '$(NORMAL)'
 
 # output;
 # concordance     num_markers_used        num_total_markers       tumor   normal  tumor_pileup    normal_pileup
