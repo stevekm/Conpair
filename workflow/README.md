@@ -1,0 +1,1 @@
+Sample workflows that can be used to run Conpair in batch for many samples
