@@ -14,8 +14,13 @@ import os
 import optparse
 import math
 from collections import defaultdict
-from ContaminationModel import *
-from ContaminationMarker import *
+
+# need to import the module from the other dir
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+PARENT_DIR = os.path.dirname(THIS_DIR)
+sys.path.insert(0, PARENT_DIR)
+from modules.ContaminationMarker import get_markers, genotype_likelihoods_for_markers
+sys.path.pop(0)
 
 CONPAIR_DIR = os.environ['CONPAIR_DIR']
 MARKER_FILE = os.path.join(CONPAIR_DIR, 'data', 'markers', 'GRCh37.autosomes.phase3_shapeit2_mvncall_integrated.20130502.SNV.genotype.sselect_v4_MAF_0.4_LD_0.8.txt')
@@ -36,11 +41,11 @@ parser.add_option('-H', '--normal_homozygous_markers_only', help='USE ONLY MARKE
 if not opts.tumor_pileup or not opts.normal_pileup:
     parser.print_help()
     sys.exit(1)
-    
+
 if not os.path.exists(opts.tumor_pileup):
     print('ERROR: Input tumor file {0} cannot be found.'.format(opts.tumor_pileup))
     sys.exit(1)
-    
+
 if not os.path.exists(opts.normal_pileup):
     print('ERROR: Input normal file {0} cannot be found.'.format(opts.normal_pileup))
     sys.exit(1)
@@ -51,7 +56,7 @@ if opts.markers:
 if not os.path.exists(MARKER_FILE):
     print('ERROR: Marker file {0} cannot be find.'.format(MARKER_FILE))
     sys.exit(2)
-    
+
 Markers = get_markers(MARKER_FILE)
 COVERAGE_THRESHOLD = opts.min_cov
 MMQ = opts.min_mapping_quality
@@ -95,5 +100,3 @@ else:
     outfile.write("Minimum mappinq quality: " + str(MMQ) + "\n")
     outfile.write("Minimum base quality: " + str(MBQ) + "\n")
     outfile.close()
-                  
-

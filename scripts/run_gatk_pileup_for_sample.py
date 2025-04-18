@@ -84,6 +84,10 @@ command_line = ("{7} {0} -Xmx{1} -jar {2} -T Pileup -R {3} -I {4} -L {5} -o {6} 
 				"-verbose -rf DuplicateRead --filter_reads_with_N_cigar " +
 				"--filter_mismatching_base_and_quals").format(JAVA_TEMP, opts.xmx_java, GATK, REFERENCE, opts.bam, MARKER_FILE, opts.outfile, opts.java)
 
+print(">>>")
+print(command_line)
+print("---")
+
 os.system(command_line)
 
 

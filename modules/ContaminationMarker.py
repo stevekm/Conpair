@@ -18,12 +18,15 @@
 
 import os
 import itertools
-from Genotypes import *
+if __name__ == 'modules.ContaminationMarker':
+    from .Genotypes import *
+if __name__ == 'ContaminationMarker':
+    from Genotypes import *
 from collections import OrderedDict
 
 
 class Marker:
-    
+
     def __init__(self, chrom, pos, ref, alt, RAF):
         self.chrom = chrom
         self.pos = pos
@@ -48,7 +51,7 @@ def get_markers(marker_file):
 
 
 class Pileup:
-    
+
     def __init__(self, chrom, pos, ref, qual_A, qual_C, qual_G, qual_T):
         self.chrom = chrom
         self.pos = pos
@@ -62,16 +65,21 @@ class Pileup:
 
 
 def parse_mpileup_line(line, min_map_quality=0, min_base_quality=0):
-    
-    line = line.split()
+    line = line.split(' ') # NOTE: GATK pileup is space-delim but might output missing fields, so need to specify ' ' here or missing fields get collapsed ; https://gatk.broadinstitute.org/hc/en-us/articles/360037591631-Pileup
     chrom = line[0]
     pos = line[1]
     ref = line[2]
     bases = line[3]
-    baseQs = baseQ2int(line[4])
-    
+
+    # if missing fields were collapsed then we will get an error here because the line length will be wrong
+    try:
+        baseQs = baseQ2int(line[4])
+    except IndexError:
+        print(line)
+        raise IndexError
+
     if min_map_quality > 0:
-        verbose_lines = line[6].split(',')
+        verbose_lines = line[7].split(',')
         mapqs = [v.split('@')[-1] for v in verbose_lines]
         mapqs_above_threshold = set([i for i in range(0, len(mapqs)) if int(mapqs[i]) >= min_map_quality])
 
@@ -79,27 +87,27 @@ def parse_mpileup_line(line, min_map_quality=0, min_base_quality=0):
     indexes_C = find_all_positions_of_char(bases, 'C')
     indexes_G = find_all_positions_of_char(bases, 'G')
     indexes_T = find_all_positions_of_char(bases, 'T')
-    
+
     if min_map_quality > 0:
         indexes_A = mapqs_above_threshold.intersection(indexes_A)
         indexes_C = mapqs_above_threshold.intersection(indexes_C)
         indexes_G = mapqs_above_threshold.intersection(indexes_G)
         indexes_T = mapqs_above_threshold.intersection(indexes_T)
-    
+
     A_base_quals_list = [baseQs[i] for i in indexes_A if int(baseQs[i]) >= min_base_quality]
     C_base_quals_list = [baseQs[i] for i in indexes_C if int(baseQs[i]) >= min_base_quality]
     G_base_quals_list = [baseQs[i] for i in indexes_G if int(baseQs[i]) >= min_base_quality]
     T_base_quals_list = [baseQs[i] for i in indexes_T if int(baseQs[i]) >= min_base_quality]
-    
+
     P = Pileup(chrom, pos, ref, A_base_quals_list, C_base_quals_list, G_base_quals_list, T_base_quals_list)
     return(P)
 
 
 def genotype_likelihoods_for_markers(Markers, mpileup_file, min_map_quality=0, min_base_quality=0):
-    
+
     M = dict()
     f = open(mpileup_file)
-    
+
     for line in f:
         if line.startswith("[REDUCE RESULT]"):
             continue
@@ -108,31 +116,31 @@ def genotype_likelihoods_for_markers(Markers, mpileup_file, min_map_quality=0, m
             marker = Markers[pileup.chrom + ":" + pileup.pos]
         except:
             continue
-    
+
         ref = marker.ref
         alt = marker.alt
         RAF = marker.RAF
-        
+
         if pileup.Quals[ref] == [] and pileup.Quals[alt] == []:
             M[pileup.chrom + ":" + pileup.pos] = None
             continue
-        
+
         AA_likelihood, AB_likelihood, BB_likelihood = compute_genotype_likelihood(pileup.Quals[ref], pileup.Quals[alt], normalize=False)
         prAA, prAB, prBB = prior_genotype_probability(RAF)
-        
-        
+
+
         M[pileup.chrom + ":" + pileup.pos] = {'likelihoods' : [AA_likelihood/prAA, AB_likelihood/prAB, BB_likelihood/prBB], 'coverage': pileup.depth}
-        
+
     for m in Markers:
         try:
             v = M[m]
         except:
             M[m] = None
-    
+
     f.close()
     return(M)
-    
-    
+
+
 
 
 
@@ -175,8 +183,3 @@ def baseQ2int(baseQ_string, scaling_factor=33):
 def find_all_positions_of_char(s, char):
     indexes = [i for i in range(0, len(s)) if s[i] == char]
     return(indexes)
-
-
-
-
-
